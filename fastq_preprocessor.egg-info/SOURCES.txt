@@ -1,4 +1,3 @@
-LICENSE.txt
 README.md
 setup.py
 bin/fastq_preprocessor

@@ -7,11 +7,11 @@
                                                                                                                                             
 
 ```
-#### Description
+#### Description:
 
 A fastq preprocessor for short read sequencing. Can be used as a wrapper around `fastp` for a standardized directory structure or can feed the trimmed reads into `bowtie2` if an index is provided to decontaminate sequences similar to `kneaddata` (useful in metagenomics to remove host reads). Also includes functionality to filter based on k-mer profiles and is useful for quantifying the amount of ribosomal reads.  At each stage, `seqkit stats` is run so there are read stats that can be used post hoc.  
 
-#### About
+#### About:
 
 `__author__ = "Josh L. Espinoza"`
 
@@ -38,7 +38,10 @@ A fastq preprocessor for short read sequencing. Can be used as a wrapper around 
 * genopype
 * soothsayer_utils
 
-#### Usage
+#### Installation: 
+`pip install fastq_preprocessor` # If `pip` is used then it assumes bioinformatics packages are installed in the same `conda` environment
+
+#### Usage:
 
 ```bash
 fastq_preprocessor % fastq_preprocessor -h
@@ -106,7 +109,7 @@ Copyright 2022 Josh L. Espinoza (jespinoz@jcvi.org)
 
 ```
 
-#### Output
+#### Output:
 
 ```
 =====================
