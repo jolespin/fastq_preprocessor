@@ -1,0 +1,11 @@
+LICENSE.txt
+README.md
+setup.py
+bin/fastq_preprocessor
+fastq_preprocessor/__init__.py
+fastq_preprocessor/fastq_preprocessor.py
+fastq_preprocessor.egg-info/PKG-INFO
+fastq_preprocessor.egg-info/SOURCES.txt
+fastq_preprocessor.egg-info/dependency_links.txt
+fastq_preprocessor.egg-info/requires.txt
+fastq_preprocessor.egg-info/top_level.txt
