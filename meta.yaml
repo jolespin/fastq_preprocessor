@@ -1,0 +1,44 @@
+{% set name = "fastq_preprocessor" %}
+{% set version = "2022.1.19" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+  script: $PYTHON -m pip install --no-deps --ignore-installed .
+
+source:
+  url: https://github.com/jolespin/fastq_preprocessor/releases/download/v{{version}}/fastq_preprocessor-{{version}}.tar.gz
+
+build:
+  noarch: python
+  number: 0
+
+requirements:
+  build:
+    - python >=3.6
+    - setuptools
+  run:
+    - python >=3.6
+    - samtools >=1.9
+    - seqkit
+    - bbmap
+    - fastp
+    - bowtie2
+    - pandas >=0.24.2
+    - scandir
+    - tqdm
+    - bz2file
+    - tzlocal
+    - pathlib2
+    - requests
+    - numpy >=1.11
+    - soothsayer_utils >=2022.2.9
+    - genopype >=2021.8.18
+
+about:
+  home: https://github.com/jolespin/fastq_preprocessor
+  license: BSD-3
+  license_family: BSD
+  license_file: LICENSE.txt
+  summary: 'A fastq preprocessor for short read sequencing'
+  description: 'A fastq preprocessor for short read sequencing. Can be used as a wrapper around fastp for a standardized directory structure or can feed the trimmed reads into bowtie2 if an index is provided to decontaminate sequences similar to kneaddata (useful in metagenomics to remove host reads). Also includes functionality to filter based on k-mer profiles and is useful for quantifying the amount of ribosomal reads. At each stage, seqkit stats is run so there are read stats that can be used post hoc.'

@@ -1,0 +1,7 @@
+graft fastq_preprocessor
+include setup.py
+include LICENSE.txt
+include README.md
+global-exclude *.py[cod]
+global-exclude Icon*
+global-exclude .DS_Store

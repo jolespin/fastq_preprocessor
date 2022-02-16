@@ -23,7 +23,7 @@ A fastq preprocessor for short read sequencing. Can be used as a wrapper around 
 
 `__license__ = "BSD-3"`
 
-`__version__ = "2022.01.13"`
+`__version__ = "2022.1.13"`
 
 #### Dependencies: 
 
@@ -39,7 +39,15 @@ A fastq preprocessor for short read sequencing. Can be used as a wrapper around 
 * soothsayer_utils
 
 #### Installation: 
-`pip install fastq_preprocessor` # If `pip` is used then it assumes bioinformatics packages are installed in the same `conda` environment
+```
+# Conda [Recommended]
+conda install -c jolespin fastq_preprocessor 
+
+# PyPI [See note below]
+pip install fastq_preprocessor
+``` 
+
+Note: If `pip` is used for installation then it assumes bioinformatics packages are installed in the same `conda` environment. 
 
 #### Usage:
 

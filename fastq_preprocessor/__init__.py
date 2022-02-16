@@ -33,7 +33,7 @@
 # =======
 # Version
 # =======
-__version__= "2022.01.13"
+__version__= "2022.01.19"
 __author__ = "Josh L. Espinoza"
 __email__ = "jespinoz@jcvi.org, jol.espinoz@gmail.com"
 __url__ = "https://github.com/jolespin/fastq_preprocessor"
