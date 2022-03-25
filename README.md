@@ -23,7 +23,7 @@ A fastq preprocessor for short read sequencing. Can be used as a wrapper around 
 
 `__license__ = "BSD-3"`
 
-`__version__ = "2022.1.13"`
+`__version__ = "2022.3.25"`
 
 #### Dependencies: 
 
@@ -94,8 +94,8 @@ Bowtie2 arguments:
                         (e.g., Human GRCh38 from ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids//GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.bowtie_index.tar.gz)
   --retain_trimmed_reads RETAIN_TRIMMED_READS
                         Retain fastp trimmed fastq after decontamination. 0=No, 1=yes [Default: 0]
-  --retain_decontaminated_reads RETAIN_DECONTAMINATED_READS
-                        Retain decontaminated fastq after decontamination. 0=No, 1=yes [Default: 0]
+  --retain_contaminated_reads retain_contaminated_reads
+                        Retain contaminated fastq after decontamination. 0=No, 1=yes [Default: 0]
   --bowtie2_options BOWTIE2_OPTIONS
                         Bowtie2 | More options (e.g. --arg 1 ) [Default: '']
                         http://bowtie-bio.sourceforge.net/bowtie2/manual.shtml
