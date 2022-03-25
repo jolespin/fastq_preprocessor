@@ -12,7 +12,7 @@ from soothsayer_utils import *
 pd.options.display.max_colwidth = 100
 
 __program__ = os.path.split(sys.argv[0])[-1]
-__version__ = "2022.01.19"
+__version__ = "2022.3.25"
 
 # .............................................................................
 # Primordial
@@ -132,7 +132,7 @@ def get_bowtie2_cmd(input_filepaths, output_filepaths, output_directory, directo
         "rm -rf {}".format(os.path.join( directories[("intermediate",  "1__fastp")], "*.fastq.gz")),
         ]
     # Remove decontaminated reads
-    if not opts.retain_decontaminated_reads:
+    if not opts.retain_contaminated_reads:
         cmd += [
         "&&",
         "rm -rf {}".format(os.path.join( output_directory, "contaminated_*.fastq.gz")),
@@ -457,7 +457,7 @@ def configure_parameters(opts, directories):
 
     assert opts.forward_reads != opts.reverse_reads, "You probably mislabeled the input files because `r1` should not be the same as `r2`: {}".format(opts.forward_reads)
     assert_acceptable_arguments(opts.retain_trimmed_reads, {0,1})
-    assert_acceptable_arguments(opts.retain_decontaminated_reads, {0,1})
+    assert_acceptable_arguments(opts.retain_contaminated_reads, {0,1})
 
     # Set environment variables
     add_executables_to_environment(opts=opts)
@@ -499,7 +499,7 @@ def main(args=None):
     parser_bowtie2 = parser.add_argument_group('Bowtie2 arguments')
     parser_bowtie2.add_argument("-x", "--contamination_index", type=str, help="Bowtie2 | path/to/contamination_index\n(e.g., Human GRCh38 from ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids//GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.bowtie_index.tar.gz)")
     parser_bowtie2.add_argument("--retain_trimmed_reads", default=0, type=int, help = "Retain fastp trimmed fastq after decontamination. 0=No, 1=yes [Default: 0]") 
-    parser_bowtie2.add_argument("--retain_decontaminated_reads", default=0, type=int, help = "Retain decontaminated fastq after decontamination. 0=No, 1=yes [Default: 0]")
+    parser_bowtie2.add_argument("--retain_contaminated_reads", default=0, type=int, help = "Retain contaminated fastq after decontamination. 0=No, 1=yes [Default: 0]")
     parser_bowtie2.add_argument("--bowtie2_options", type=str, default="", help="Bowtie2 | More options (e.g. --arg 1 ) [Default: '']\nhttp://bowtie-bio.sourceforge.net/bowtie2/manual.shtml")
 
     # BBDuk
