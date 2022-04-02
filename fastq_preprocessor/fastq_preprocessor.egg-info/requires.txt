@@ -1,6 +1,0 @@
-genopype>=2020.3.27
-soothsayer_utils>=2022.1.19
-pandas>=0.24
-numpy
-tqdm
-scandir

@@ -12,7 +12,7 @@ from soothsayer_utils import *
 pd.options.display.max_colwidth = 100
 
 __program__ = os.path.split(sys.argv[0])[-1]
-__version__ = "2022.3.25"
+__version__ = "2022.4.2"
 
 # .............................................................................
 # Primordial
@@ -151,6 +151,7 @@ def get_bbduk_cmd(input_filepaths, output_filepaths, output_directory, directori
         "threads={}".format(opts.n_jobs),
         "in1={}".format(input_filepaths[0]),
         "in2={}".format(input_filepaths[1]),
+        "ref={}".format(opts.kmer_database),
         # "refstats={}".format(os.path.join(output_directory, "bbduk_refstats.txt")),
         # "stats={}".format(os.path.join(output_directory, "bbduk_stats.txt")),
         "k={}".format(opts.kmer_size),
