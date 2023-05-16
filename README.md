@@ -23,7 +23,7 @@ A fastq preprocessor for short read sequencing. Can be used as a wrapper around 
 
 `__license__ = "BSD-3"`
 
-`__version__ = "2022.5.16"`
+`__version__ = "2022.5.17"`
 
 #### Dependencies: 
 

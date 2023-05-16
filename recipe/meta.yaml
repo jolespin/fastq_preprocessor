@@ -1,5 +1,5 @@
 {% set name = "fastq_preprocessor" %}
-{% set version = "2023.5.16" %}
+{% set version = "2023.5.17" %}
 
 package:
   name: {{ name|lower }}
@@ -34,6 +34,7 @@ requirements:
     - numpy >=1.11
     - soothsayer_utils >=2022.6.24
     - genopype >=2023.5.15
+    - coreutils
 
 about:
   home: https://github.com/jolespin/fastq_preprocessor

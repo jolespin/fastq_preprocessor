@@ -12,7 +12,7 @@ from soothsayer_utils import *
 pd.options.display.max_colwidth = 100
 
 __program__ = os.path.split(sys.argv[0])[-1]
-__version__ = "2023.5.16"
+__version__ = "2023.5.17"
 
 # .............................................................................
 # Primordial
@@ -214,7 +214,7 @@ python -c "import glob, pandas as pd; pd.concat(map(lambda fp: pd.read_csv(fp, s
     ]
         
 
-    return cmd[:-1]
+    return cmd
 
 # ============
 # Run Pipeline
@@ -516,6 +516,12 @@ def main(args=None):
     opts = parser.parse_args()
     opts.script_directory  = script_directory
     opts.script_filename = script_filename
+
+    # Threads
+    if opts.n_jobs == -1:
+        from multiprocessing import cpu_count 
+        opts.n_jobs = cpu_count()
+    assert opts.n_jobs >= 1, "--n_jobs must be ≥ 1.  To select all available threads, use -1."
 
     # Directories
     directories = dict()

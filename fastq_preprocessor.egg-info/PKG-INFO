@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: fastq-preprocessor
-Version: 2023.5.16
+Version: 2023.5.17
 Summary: Fast short read fastq preprocessor with optional contamination removal
 Home-page: https://github.com/jolespin/fastq_preprocessor
 Author: Josh L. Espinoza
