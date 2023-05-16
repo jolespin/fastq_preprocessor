@@ -1,16 +1,16 @@
 {% set name = "fastq_preprocessor" %}
-{% set version = "2022.4.2" %}
+{% set version = "2023.5.16" %}
 
 package:
   name: {{ name|lower }}
   version: {{ version }}
-  script: $PYTHON -m pip install --no-deps --ignore-installed .
 
 source:
   url: https://github.com/jolespin/fastq_preprocessor/releases/download/v{{version}}/fastq_preprocessor-{{version}}.tar.gz
 
 build:
   noarch: python
+  script: $PYTHON -m pip install --no-deps --ignore-installed .
   number: 0
 
 requirements:
@@ -32,8 +32,8 @@ requirements:
     - pathlib2
     - requests
     - numpy >=1.11
-    - soothsayer_utils >=2022.2.9
-    - genopype >=2021.8.18
+    - soothsayer_utils >=2022.6.24
+    - genopype >=2023.5.15
 
 about:
   home: https://github.com/jolespin/fastq_preprocessor

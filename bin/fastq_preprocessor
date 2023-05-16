@@ -12,7 +12,7 @@ from soothsayer_utils import *
 pd.options.display.max_colwidth = 100
 
 __program__ = os.path.split(sys.argv[0])[-1]
-__version__ = "2022.4.2"
+__version__ = "2023.5.16"
 
 # .............................................................................
 # Primordial
@@ -56,7 +56,7 @@ def get_fastp_cmd(input_filepaths, output_filepaths, output_directory, directori
     input_filepaths[1],
     os.path.join(output_directory, "trimmed_1.fastq.gz"),
     os.path.join(output_directory, "trimmed_2.fastq.gz"),
-    os.path.join(output_directory, "trimmed_singletons.fastq.gz"),
+    # os.path.join(output_directory, "trimmed_singletons.fastq.gz"),
     ">",
     os.path.join(output_directory, "seqkit_stats.tsv"),
     ")",
@@ -75,8 +75,8 @@ def get_bowtie2_cmd(input_filepaths, output_filepaths, output_directory, directo
     "-1 {}".format(input_filepaths[0]),
     "-2 {}".format(input_filepaths[1]),
     "--seed {}".format(opts.random_state),
-    "--un-gz {}".format(os.path.join(output_directory, "cleaned_singletons.fastq.gz")), #write unpaired reads that didn't align to <path>
-    "--al-gz {}".format(os.path.join(output_directory, "contaminated_singletons.fastq.gz")), #write unpaired reads that aligned at least once to <path>
+    # "--un-gz {}".format(os.path.join(output_directory, "cleaned_singletons.fastq.gz")), #write unpaired reads that didn't align to <path>
+    # "--al-gz {}".format(os.path.join(output_directory, "contaminated_singletons.fastq.gz")), #write unpaired reads that aligned at least once to <path>
     "--un-conc {}".format(os.path.join(output_directory, "TMP__cleaned_%.fastq")), #write pairs that didn't align concordantly to <path>
     "--al-conc {}".format(os.path.join(output_directory, "TMP__contaminated_%.fastq")),#write pairs that aligned concordantly at least once to <path>
     # "--met-file {}".format(os.path.join(output_directory, "bowtie2_metrics.txt")),
@@ -206,11 +206,12 @@ python -c "import glob, pandas as pd; pd.concat(map(lambda fp: pd.read_csv(fp, s
             ),
         ]
 
-    for filepath in input_filepaths:
-        cmd += [ 
-            "ln -f -s {} {}".format(os.path.realpath(filepath), output_directory),
-            "&&",
-        ]
+    cmd += [
+    "DST={}; (for SRC in {}; do SRC=$(realpath --relative-to $DST $SRC); ln -sf $SRC $DST; done)".format(
+        output_directory,
+        " ".join(input_filepaths), 
+        )
+    ]
         
 
     return cmd[:-1]
