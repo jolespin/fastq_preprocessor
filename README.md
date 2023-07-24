@@ -23,7 +23,7 @@ A fastq preprocessor for short read sequencing. Can be used as a wrapper around 
 
 `__license__ = "GNU AFFERO GENERAL PUBLIC LICENSE"`
 
-`__version__ = "2023.7.17"`
+`__version__ = "2023.7.24"`
 
 #### Dependencies: 
 
