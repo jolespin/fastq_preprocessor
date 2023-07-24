@@ -21,9 +21,9 @@ A fastq preprocessor for short read sequencing. Can be used as a wrapper around 
 
 `__developmental__ = True`
 
-`__license__ = "BSD-3"`
+`__license__ = "GNU AFFERO GENERAL PUBLIC LICENSE"`
 
-`__version__ = "2022.5.17"`
+`__version__ = "2023.7.17"`
 
 #### Dependencies: 
 

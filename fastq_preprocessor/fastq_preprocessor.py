@@ -12,37 +12,40 @@ from soothsayer_utils import *
 pd.options.display.max_colwidth = 100
 
 __program__ = os.path.split(sys.argv[0])[-1]
-__version__ = "2023.5.17"
+__version__ = "2023.7.24"
 
 # .............................................................................
 # Primordial
 # .............................................................................
-# Kneaddata
+# Fastp
 def get_fastp_cmd(input_filepaths, output_filepaths, output_directory, directories, opts):
     os.environ["TMPDIR"] = directories["tmp"]
     # Command
     cmd = [
     # fastp
     "(",
+    os.environ["repair.sh"],
+    "out=stdout.fastq",
+    "in1={}".format(input_filepaths[0]),
+    "in2={}".format(input_filepaths[1]),
+    "|",
     os.environ["fastp"],
-    "--in1 {}".format(input_filepaths[0]),
-    "--in2 {}".format(input_filepaths[1]),
+    "--stdin",
     "--stdout",
+    "--interleaved_in",
     "-h {}".format(os.path.join(output_directory, "fastp.html")),
     "-j {}".format(os.path.join(output_directory, "fastp.json")),
     "-l {}".format(opts.minimum_read_length),
     "--thread {}".format(opts.n_jobs),
     {"detect":"--detect_adapter_for_pe"}.get(opts.adapters, "--adapter_fasta {}".format(opts.adapters)), # Use --detect_adapter_for_pe by default unless a fasta path is given
     opts.fastp_options,
-    ")",
     # reformat.sh
     "|",
-    "(",
     os.environ["repair.sh"],
     "in=stdin.fastq",
     "out1={}".format(os.path.join(output_directory, "trimmed_1.fastq.gz")),
     "out2={}".format(os.path.join(output_directory, "trimmed_2.fastq.gz")),
-    "outs={}".format(os.path.join(output_directory, "trimmed_singletons.fastq.gz")),
+    # "outs={}".format(os.path.join(output_directory, "trimmed_singletons.fastq.gz")),
     "overwrite=t",
     ")",
     # Seqkit
@@ -499,14 +502,14 @@ def main(args=None):
 
     # Bowtie
     parser_bowtie2 = parser.add_argument_group('Bowtie2 arguments')
-    parser_bowtie2.add_argument("-x", "--contamination_index", type=str, help="Bowtie2 | path/to/contamination_index\n(e.g., Human GRCh38 from ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids//GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.bowtie_index.tar.gz)")
+    parser_bowtie2.add_argument("-x", "--contamination_index", type=str, help="Bowtie2 | path/to/contamination_index\n(e.g., Human T2T assembly from https://genome-idx.s3.amazonaws.com/bt/chm13v2.0.zip)")
     parser_bowtie2.add_argument("--retain_trimmed_reads", default=0, type=int, help = "Retain fastp trimmed fastq after decontamination. 0=No, 1=yes [Default: 0]") 
     parser_bowtie2.add_argument("--retain_contaminated_reads", default=0, type=int, help = "Retain contaminated fastq after decontamination. 0=No, 1=yes [Default: 0]")
     parser_bowtie2.add_argument("--bowtie2_options", type=str, default="", help="Bowtie2 | More options (e.g. --arg 1 ) [Default: '']\nhttp://bowtie-bio.sourceforge.net/bowtie2/manual.shtml")
 
     # BBDuk
     parser_bbduk = parser.add_argument_group('BBDuk arguments')
-    parser_bbduk.add_argument("-k","--kmer_database", type=str,  help="BBDuk | path/to/kmer_database\n(e.g., ribokmers.fa.gz from https://drive.google.com/file/d/0B3llHR93L14wS2NqRXpXakhFaEk/view?usp=sharing)")
+    parser_bbduk.add_argument("-k","--kmer_database", type=str,  help="BBDuk | path/to/kmer_database\n(e.g., ribokmers.fa.gz from https://figshare.com/ndownloader/files/36220587)")
     parser_bbduk.add_argument("--kmer_size", type=int, default=31, help="BBDuk | k-mer size [Default: 31]")
     parser_bbduk.add_argument("--retain_kmer_hits", default=0, type=int, help = "Retain reads that map to k-mer database. 0=No, 1=yes [Default: 0]")
     parser_bbduk.add_argument("--retain_non_kmer_hits", default=0, type=int, help = "Retain reads that do not map to k-mer database. 0=No, 1=yes [Default: 0]")
