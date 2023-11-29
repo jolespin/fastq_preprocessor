@@ -18,7 +18,7 @@ setup(name='fastq_preprocessor',
       license='GNU AFFERO GENERAL PUBLIC LICENSE',
       packages=["fastq_preprocessor"],
       install_requires=[
-      "genopype >=2023.4.13",
+      "genopype >=2023.5.15",
       "soothsayer_utils >=2022.6.24",
       "pandas >=0.24",
       "numpy",
@@ -26,6 +26,10 @@ setup(name='fastq_preprocessor',
       "scandir",
       ],
     include_package_data=True,
-     scripts=["bin/fastq_preprocessor"],
+     scripts=[
+         "fastq_preprocessor/fastq_preprocessor",
+         "fastq_preprocessor/fastq_preprocessor_short.py",
+         "fastq_preprocessor/fastq_preprocessor_long.py",
+         ],
 
 )

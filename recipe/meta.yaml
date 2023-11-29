@@ -1,5 +1,5 @@
 {% set name = "fastq_preprocessor" %}
-{% set version = "2023.7.24" %}
+{% set version = "2023.11.28" %}
 
 package:
   name: {{ name|lower }}
@@ -35,11 +35,14 @@ requirements:
     - soothsayer_utils >=2022.6.24
     - genopype >=2023.5.15
     - coreutils
+    - minimap2
+    - pigz
+    - chopper
 
 about:
   home: https://github.com/jolespin/fastq_preprocessor
   license: GPL3
   license_family: GPL3
   license_file: LICENSE
-  summary: 'A fastq preprocessor for short read sequencing'
-  description: 'A fastq preprocessor for short read sequencing. Can be used as a wrapper around fastp for a standardized directory structure or can feed the trimmed reads into bowtie2 if an index is provided to decontaminate sequences similar to kneaddata (useful in metagenomics to remove host reads). Also includes functionality to filter based on k-mer profiles and is useful for quantifying the amount of ribosomal reads. At each stage, seqkit stats is run so there are read stats that can be used post hoc.'
+  summary: 'A fastq preprocessor for short and long read sequencing'
+  description: 'A fastq preprocessor for short and long read sequencing. Optional contamination removal'

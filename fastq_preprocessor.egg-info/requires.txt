@@ -1,0 +1,6 @@
+genopype>=2023.5.15
+soothsayer_utils>=2022.6.24
+pandas>=0.24
+numpy
+tqdm
+scandir

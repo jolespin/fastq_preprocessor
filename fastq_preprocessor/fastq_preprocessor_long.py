@@ -7,46 +7,37 @@ import pandas as pd
 
 # Soothsayer Ecosystem
 from genopype import *
+from genopype import __version__ as genopype_version
 from soothsayer_utils import *
 
 pd.options.display.max_colwidth = 100
 
 __program__ = os.path.split(sys.argv[0])[-1]
-__version__ = "2023.7.24"
+__version__ = "2023.11.28"
 
 # .............................................................................
 # Primordial
 # .............................................................................
 # Fastp
-def get_fastp_cmd(input_filepaths, output_filepaths, output_directory, directories, opts):
+def get_chopper_cmd(input_filepaths, output_filepaths, output_directory, directories, opts):
     os.environ["TMPDIR"] = directories["tmp"]
     # Command
     cmd = [
     # fastp
     "(",
-    os.environ["repair.sh"],
-    "out=stdout.fastq",
-    "in1={}".format(input_filepaths[0]),
-    "in2={}".format(input_filepaths[1]),
+    "gunzip -c" if input_filepaths[0].endswith(".gz") else "cat",
+    input_filepaths[0],
     "|",
-    os.environ["fastp"],
-    "--stdin",
-    "--stdout",
-    "--interleaved_in",
-    "-h {}".format(os.path.join(output_directory, "fastp.html")),
-    "-j {}".format(os.path.join(output_directory, "fastp.json")),
+    os.environ["chopper"],
     "-l {}".format(opts.minimum_read_length),
-    "--thread {}".format(opts.n_jobs),
-    {"detect":"--detect_adapter_for_pe"}.get(opts.adapters, "--adapter_fasta {}".format(opts.adapters)), # Use --detect_adapter_for_pe by default unless a fasta path is given
-    opts.fastp_options,
-    # reformat.sh
+    "-q {}".format(opts.minimum_quality_score),
+    "--threads {}".format(opts.n_jobs),
+    opts.chopper_options,
     "|",
-    os.environ["repair.sh"],
-    "in=stdin.fastq",
-    "out1={}".format(os.path.join(output_directory, "trimmed_1.fastq.gz")),
-    "out2={}".format(os.path.join(output_directory, "trimmed_2.fastq.gz")),
-    # "outs={}".format(os.path.join(output_directory, "trimmed_singletons.fastq.gz")),
-    "overwrite=t",
+    os.environ["pigz"],
+    "-p {}".format(opts.n_jobs),
+    ">",
+    os.path.join(output_directory, "trimmed.fastq.gz"),
     ")",
     # Seqkit
     "&&",
@@ -56,67 +47,70 @@ def get_fastp_cmd(input_filepaths, output_filepaths, output_directory, directori
     "-T",
     "-j {}".format(opts.n_jobs),
     input_filepaths[0],
-    input_filepaths[1],
-    os.path.join(output_directory, "trimmed_1.fastq.gz"),
-    os.path.join(output_directory, "trimmed_2.fastq.gz"),
-    # os.path.join(output_directory, "trimmed_singletons.fastq.gz"),
+    os.path.join(output_directory, "trimmed.fastq.gz"),
     ">",
     os.path.join(output_directory, "seqkit_stats.tsv"),
     ")",
     ]
     return cmd
 
-# Bowtie2
-def get_bowtie2_cmd(input_filepaths, output_filepaths, output_directory, directories, opts):
+# MiniMap2
+def get_minimap2_cmd(input_filepaths, output_filepaths, output_directory, directories, opts):
     os.environ["TMPDIR"] = directories["tmp"]
     # Command
     cmd = [
     "(",
-    os.environ["bowtie2"],
-    "-x {}".format(opts.contamination_index),
-    "-p {}".format(opts.n_jobs),
-    "-1 {}".format(input_filepaths[0]),
-    "-2 {}".format(input_filepaths[1]),
-    "--seed {}".format(opts.random_state),
-    # "--un-gz {}".format(os.path.join(output_directory, "cleaned_singletons.fastq.gz")), #write unpaired reads that didn't align to <path>
-    # "--al-gz {}".format(os.path.join(output_directory, "contaminated_singletons.fastq.gz")), #write unpaired reads that aligned at least once to <path>
-    "--un-conc {}".format(os.path.join(output_directory, "TMP__cleaned_%.fastq")), #write pairs that didn't align concordantly to <path>
-    "--al-conc {}".format(os.path.join(output_directory, "TMP__contaminated_%.fastq")),#write pairs that aligned concordantly at least once to <path>
-    # "--met-file {}".format(os.path.join(output_directory, "bowtie2_metrics.txt")),
-    opts.bowtie2_options,
+    os.environ["minimap2"],
+    "-a",
+    "-t {}".format(opts.n_jobs),
+    "-x {}".format(opts.minimap2_preset),
+    opts.minimap2_options,
+    opts.contamination_index,
+    input_filepaths[0],
     ">",
-    "/dev/null",
-    ")",
-    "&&",
-    # Repair decontaminated
-   "(",
-    os.environ["repair.sh"],
-    "in1={}".format(os.path.join(output_directory, "TMP__cleaned_1.fastq")),
-    "in2={}".format(os.path.join(output_directory, "TMP__cleaned_2.fastq")),
-    "out1={}".format(os.path.join(output_directory, "cleaned_1.fastq.gz")),
-    "out2={}".format(os.path.join(output_directory, "cleaned_2.fastq.gz")),
-    "overwrite=t",
-    ")",
-    "&&",
-    "rm {}".format(os.path.join(output_directory, "TMP__cleaned_*.fastq")),
-    "&&",
-    # Repair contaminated
-   "(",
-    os.environ["repair.sh"],
-    "in1={}".format(os.path.join(output_directory, "TMP__contaminated_1.fastq")),
-    "in2={}".format(os.path.join(output_directory, "TMP__contaminated_2.fastq")),
-    "out1={}".format(os.path.join(output_directory, "contaminated_1.fastq.gz")),
-    "out2={}".format(os.path.join(output_directory, "contaminated_2.fastq.gz")),
-    "overwrite=t",
-    ")",
-    "&&",
-    "rm {}".format(os.path.join(output_directory, "TMP__contaminated_*.fastq")),
-    ]
+    os.path.join(directories["tmp"], "minimap2.sam"),
 
-    cmd += [
+        "&&",
+
+    "cat",
+    os.path.join(directories["tmp"], "minimap2.sam"),
+    "|",
+    os.environ["samtools"],
+    "fastq",
+    "--threads {}".format(opts.n_jobs),
+    "-f 4",
+    "-",
+    "|",
+    os.environ["pigz"],
+    "-p {}".format(opts.n_jobs),
+    ">",
+    os.path.join(output_directory, "contaminated.fastq.gz"),
+
+
+        "&&",
+
+    "cat",
+    os.path.join(directories["tmp"], "minimap2.sam"),
+    "|",
+    os.environ["samtools"],
+    "fastq",
+    "--threads {}".format(opts.n_jobs),
+    "-F 4",
+    "-",
+    "|",
+    os.environ["pigz"],
+    "-p {}".format(opts.n_jobs),
+    ">",
+    os.path.join(output_directory, "cleaned.fastq.gz"),
+    ")",
+
+        "&&",
+
+    "rm -rf {}".format(os.path.join(directories["tmp"], "minimap2.sam")),
+
     # Seqkit
-    "&&",
-    "(",
+        "&&",
+
     os.environ["seqkit"],
     "stats",
     "-T",
@@ -125,20 +119,19 @@ def get_bowtie2_cmd(input_filepaths, output_filepaths, output_directory, directo
 
     ">",
     os.path.join(output_directory, "seqkit_stats.tsv"),
-    ")",
     ]
 
     # Remove trimmed reads 
     if not opts.retain_trimmed_reads:
         cmd += [
         "&&",
-        "rm -rf {}".format(os.path.join( directories[("intermediate",  "1__fastp")], "*.fastq.gz")),
+        "rm -rf {}".format(os.path.join( directories[("intermediate",  "1__chopper")], "trimmed.fastq.gz")),
         ]
     # Remove decontaminated reads
     if not opts.retain_contaminated_reads:
         cmd += [
         "&&",
-        "rm -rf {}".format(os.path.join( output_directory, "contaminated_*.fastq.gz")),
+        "rm -rf {}".format(os.path.join( output_directory, "contaminated.fastq.gz")),
         ]
             
     return cmd
@@ -152,17 +145,14 @@ def get_bbduk_cmd(input_filepaths, output_filepaths, output_directory, directori
         "zl=1", # Most likely will delete these files
         "overwrite=t",
         "threads={}".format(opts.n_jobs),
-        "in1={}".format(input_filepaths[0]),
-        "in2={}".format(input_filepaths[1]),
+        "in={}".format(input_filepaths[0]),
         "ref={}".format(opts.kmer_database),
         # "refstats={}".format(os.path.join(output_directory, "bbduk_refstats.txt")),
         # "stats={}".format(os.path.join(output_directory, "bbduk_stats.txt")),
         "k={}".format(opts.kmer_size),
         "minlen={}".format(opts.minimum_read_length),
-        "out1={}".format(os.path.join(output_directory, "non-kmer_hits_1.fastq.gz")),
-        "out2={}".format(os.path.join(output_directory, "non-kmer_hits_2.fastq.gz")),
-        "outm1={}".format(os.path.join(output_directory, "kmer_hits_1.fastq.gz")),
-        "outm2={}".format(os.path.join(output_directory, "kmer_hits_2.fastq.gz")),
+        "out={}".format(os.path.join(output_directory, "non-kmer_hits.fastq.gz")),
+        "outm={}".format(os.path.join(output_directory, "kmer_hits.fastq.gz")),
         opts.bbduk_options,
         ")",
 
@@ -184,13 +174,13 @@ def get_bbduk_cmd(input_filepaths, output_filepaths, output_directory, directori
     if not opts.retain_kmer_hits:
         cmd += [
         "&&",
-        "rm -rf {}".format(os.path.join( output_directory, "kmer_hits_*.fastq.gz")),
+        "rm -rf {}".format(os.path.join( output_directory, "kmer_hits.fastq.gz")),
         ]
     # Remove bbduk non-kmer hits
     if not opts.retain_non_kmer_hits:
         cmd += [
         "&&",
-        "rm -rf {}".format(os.path.join( output_directory, "non-kmer_hits_*.fastq.gz")),
+        "rm -rf {}".format(os.path.join( output_directory, "non-kmer_hits.fastq.gz")),
         ]
 
             
@@ -230,10 +220,12 @@ def add_executables_to_environment(opts):
     accessory_scripts = set([])
 
     required_executables={
-                "repair.sh",
+                # "repair.sh",
+                "pigz",
+                "samtools",
                 "bbduk.sh",
-                "bowtie2",
-                "fastp",
+                "minimap2",
+                "chopper",
                 "seqkit",
     } | accessory_scripts
 
@@ -275,15 +267,15 @@ def create_pipeline(opts, directories, f_cmds):
     # Fastp
     # =========
     step = 1
-    program = "fastp"
+    program = "chopper"
     program_label = "{}__{}".format(step, program)
     # Add to directories
     output_directory = directories[("intermediate",  program_label)] = create_directory(os.path.join(directories["intermediate"], program_label))
 
     # Info
-    description = "Quality trimming and adapter removal"
+    description = "Quality trimming"
     # i/o
-    input_filepaths = [opts.forward_reads, opts.reverse_reads]
+    input_filepaths = [opts.reads]
 
     if all([
         bool(opts.contamination_index),
@@ -291,7 +283,7 @@ def create_pipeline(opts, directories, f_cmds):
     ]):
         output_filenames = ["seqkit_stats.tsv"]
     else:
-        output_filenames = ["trimmed_1.fastq.gz", "trimmed_2.fastq.gz", "seqkit_stats.tsv"]
+        output_filenames = ["trimmed.fastq.gz", "seqkit_stats.tsv"]
     output_filepaths = list(map(lambda filename: os.path.join(output_directory, filename), output_filenames))
 
     # Parameters
@@ -303,7 +295,7 @@ def create_pipeline(opts, directories, f_cmds):
         "directories":directories,
     }
     # Command
-    cmd = get_fastp_cmd(**params)
+    cmd = get_chopper_cmd(**params)
     pipeline.add_step(
                 id=program,
                 description = description,
@@ -320,7 +312,7 @@ def create_pipeline(opts, directories, f_cmds):
     # =========
     if opts.contamination_index:
         step += 1
-        program = "bowtie2"
+        program = "minimap2"
         program_label = "{}__{}".format(step, program)
         # Add to directories
         output_directory = directories[("intermediate",  program_label)] = create_directory(os.path.join(directories["intermediate"], program_label))
@@ -329,12 +321,11 @@ def create_pipeline(opts, directories, f_cmds):
         description = "Decontaminate reads based on a reference"
         # i/o
         input_filepaths = [
-            os.path.join(os.path.join(directories["intermediate"], "1__fastp"), "trimmed_1.fastq.gz"),
-            os.path.join(os.path.join(directories["intermediate"], "1__fastp"), "trimmed_2.fastq.gz"),
+            os.path.join(os.path.join(directories["intermediate"], "1__chopper"), "trimmed.fastq.gz"),
 
         ]
 
-        output_filenames = ["cleaned_1.fastq.gz", "cleaned_2.fastq.gz", "seqkit_stats.tsv"]
+        output_filenames = ["cleaned.fastq.gz", "seqkit_stats.tsv"]
         output_filepaths = list(map(lambda filename: os.path.join(output_directory, filename), output_filenames))
 
         # Parameters
@@ -346,7 +337,7 @@ def create_pipeline(opts, directories, f_cmds):
             "directories":directories,
         }
         # Command
-        cmd = get_bowtie2_cmd(**params)
+        cmd = get_minimap2_cmd(**params)
         pipeline.add_step(
                     id=program,
                     description = description,
@@ -374,15 +365,13 @@ def create_pipeline(opts, directories, f_cmds):
         if opts.contamination_index:
             # i/o
             input_filepaths = [
-                os.path.join(os.path.join(directories["intermediate"], "2__bowtie2"), "cleaned_1.fastq.gz"),
-                os.path.join(os.path.join(directories["intermediate"], "2__bowtie2"), "cleaned_2.fastq.gz"),
+                os.path.join(os.path.join(directories["intermediate"], "2__minimap2"), "cleaned.fastq.gz"),
             ]
 
         else:
             # i/o
             input_filepaths = [
-                os.path.join(os.path.join(directories["intermediate"], "1__fastp"), "trimmed_1.fastq.gz"),
-                os.path.join(os.path.join(directories["intermediate"], "1__fastp"), "trimmed_2.fastq.gz"),
+                os.path.join(os.path.join(directories["intermediate"], "1__chopper"), "trimmed.fastq.gz"),
 
             ]
 
@@ -460,10 +449,10 @@ def create_pipeline(opts, directories, f_cmds):
 # Configure parameters
 def configure_parameters(opts, directories):
 
-    assert opts.forward_reads != opts.reverse_reads, "You probably mislabeled the input files because `r1` should not be the same as `r2`: {}".format(opts.forward_reads)
     assert_acceptable_arguments(opts.retain_trimmed_reads, {0,1})
     assert_acceptable_arguments(opts.retain_contaminated_reads, {0,1})
-
+    assert_acceptable_arguments(opts.minimap2_preset, {"map-pb", "map-ont", "map-hifi"})
+     
     # Set environment variables
     add_executables_to_environment(opts=opts)
 
@@ -474,15 +463,14 @@ def main(args=None):
     # Path info
     description = """
     Running: {} v{} via Python v{} | {}""".format(__program__, __version__, sys.version.split(" ")[0], sys.executable)
-    usage = "{} -1 <reads_1.fq> -2 <reads_2.fq> -n <name> -o <output_directory> |Optional| -x <reference_index> -k <kmer_database>".format(__program__)
+    usage = "{} -i <reads.fq[.gz]> -n <name> -o <output_directory> |Optional| -x <reference_index> -k <kmer_database>".format(__program__)
     epilog = "Copyright 2022 Josh L. Espinoza (jespinoz@jcvi.org)"
 
     # Parser
     parser = argparse.ArgumentParser(description=description, usage=usage, epilog=epilog, formatter_class=argparse.RawTextHelpFormatter)
     # Pipeline
     parser_io = parser.add_argument_group('Required I/O arguments')
-    parser_io.add_argument("-1","--forward_reads", type=str, help = "path/to/reads_1.fastq")
-    parser_io.add_argument("-2","--reverse_reads", type=str, help = "path/to/reads_2.fastq")
+    parser_io.add_argument("-i","--reads", type=str, help = "path/to/reads.fastq[.gz]", required=True)
     parser_io.add_argument("-n", "--name", type=str, help="Name of sample", required=True)
     parser_io.add_argument("-o","--project_directory", type=str, default="preprocessed", help = "path/to/project_directory [Default: preprocessed]")
 
@@ -494,18 +482,19 @@ def main(args=None):
     parser_utility.add_argument("--restart_from_checkpoint", type=int, help = "Restart from a particular checkpoint")
     parser_utility.add_argument("-v", "--version", action='version', version="{} v{}".format(__program__, __version__))
 
-    # Fastp
-    parser_fastp = parser.add_argument_group('Fastp arguments')
-    parser_fastp.add_argument("-m", "--minimum_read_length", type=int, default=75, help="Fastp | Minimum read length [Default: 75]")
-    parser_fastp.add_argument("-a", "--adapters", type=str, default="detect", help="Fastp | path/to/adapters.fasta [Default: detect]")
-    parser_fastp.add_argument("--fastp_options", type=str, default="", help="Fastp | More options (e.g. --arg 1 ) [Default: '']")
+    # Chopper
+    parser_chopper = parser.add_argument_group('Chopper arguments')
+    parser_chopper.add_argument("-m", "--minimum_read_length", type=int, default=500, help="Chopper | Minimum read length [Default: 500]")
+    parser_chopper.add_argument("-q", "--minimum_quality_score", type=int, default=10, help="Chopper | Minimum quality score [Default: 10]")
+    parser_chopper.add_argument("--chopper_options", type=str, default="", help="Chopper | More options (e.g. --arg 1 ) https://github.com/wdecoster/chopper [Default: '']")
 
-    # Bowtie
-    parser_bowtie2 = parser.add_argument_group('Bowtie2 arguments')
-    parser_bowtie2.add_argument("-x", "--contamination_index", type=str, help="Bowtie2 | path/to/contamination_index\n(e.g., Human T2T assembly from https://genome-idx.s3.amazonaws.com/bt/chm13v2.0.zip)")
-    parser_bowtie2.add_argument("--retain_trimmed_reads", default=0, type=int, help = "Retain fastp trimmed fastq after decontamination. 0=No, 1=yes [Default: 0]") 
-    parser_bowtie2.add_argument("--retain_contaminated_reads", default=0, type=int, help = "Retain contaminated fastq after decontamination. 0=No, 1=yes [Default: 0]")
-    parser_bowtie2.add_argument("--bowtie2_options", type=str, default="", help="Bowtie2 | More options (e.g. --arg 1 ) [Default: '']\nhttp://bowtie-bio.sourceforge.net/bowtie2/manual.shtml")
+    # MiniMap2
+    parser_minimap2 = parser.add_argument_group('MiniMap2 arguments')
+    parser_minimap2.add_argument("-x", "--contamination_index", type=str, help="MiniMap2 | path/to/contamination_index\n(e.g., Human T2T assembly from https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/latest_assembly_versions/GCF_009914755.1_T2T-CHM13v2.0/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna.gz)")
+    parser_minimap2.add_argument("--minimap2_preset", type=str, default="map-ont", help="MiniMap2 | MiniMap2 preset {map-pb, map-ont, map-hifi} [Default: map-ont]")
+    parser_minimap2.add_argument("--retain_trimmed_reads", default=0, type=int, help = "Retain Chopper trimmed fastq after decontamination. 0=No, 1=yes [Default: 0]") 
+    parser_minimap2.add_argument("--retain_contaminated_reads", default=0, type=int, help = "Retain contaminated fastq after decontamination. 0=No, 1=yes [Default: 0]")
+    parser_minimap2.add_argument("--minimap2_options", type=str, default="", help="MiniMap2 | More options (e.g. --arg 1 ) [Default: '']\nhttp://bowtie-bio.sourceforge.net/bowtie2/manual.shtml")
 
     # BBDuk
     parser_bbduk = parser.add_argument_group('BBDuk arguments')
@@ -542,6 +531,7 @@ def main(args=None):
     print(format_header("Name: {}".format(opts.name), "."), file=sys.stdout)
     print("Python version:", sys.version.replace("\n"," "), file=sys.stdout)
     print("Python path:", sys.executable, file=sys.stdout) #sys.path[2]
+    print("GenoPype version:", genopype_version, file=sys.stdout)
     print("Script version:", __version__, file=sys.stdout)
     print("Moment:", get_timestamp(), file=sys.stdout)
     print("Directory:", os.getcwd(), file=sys.stdout)

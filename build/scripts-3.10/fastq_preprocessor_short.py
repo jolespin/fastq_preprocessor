@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!python
 from __future__ import print_function, division
 import sys, os, argparse, glob
 from collections import OrderedDict
@@ -7,12 +7,13 @@ import pandas as pd
 
 # Soothsayer Ecosystem
 from genopype import *
+from genopype import __version__ as genopype_version
 from soothsayer_utils import *
 
 pd.options.display.max_colwidth = 100
 
 __program__ = os.path.split(sys.argv[0])[-1]
-__version__ = "2023.7.24"
+__version__ = "2023.11.28"
 
 # .............................................................................
 # Primordial
@@ -481,8 +482,8 @@ def main(args=None):
     parser = argparse.ArgumentParser(description=description, usage=usage, epilog=epilog, formatter_class=argparse.RawTextHelpFormatter)
     # Pipeline
     parser_io = parser.add_argument_group('Required I/O arguments')
-    parser_io.add_argument("-1","--forward_reads", type=str, help = "path/to/reads_1.fastq")
-    parser_io.add_argument("-2","--reverse_reads", type=str, help = "path/to/reads_2.fastq")
+    parser_io.add_argument("-1","--forward_reads", type=str, required=True, help = "path/to/reads_1.fastq[.gz]")
+    parser_io.add_argument("-2","--reverse_reads", type=str, required=True, help = "path/to/reads_2.fastq[.gz]")
     parser_io.add_argument("-n", "--name", type=str, help="Name of sample", required=True)
     parser_io.add_argument("-o","--project_directory", type=str, default="preprocessed", help = "path/to/project_directory [Default: preprocessed]")
 
@@ -542,6 +543,7 @@ def main(args=None):
     print(format_header("Name: {}".format(opts.name), "."), file=sys.stdout)
     print("Python version:", sys.version.replace("\n"," "), file=sys.stdout)
     print("Python path:", sys.executable, file=sys.stdout) #sys.path[2]
+    print("GenoPype version:", genopype_version, file=sys.stdout)
     print("Script version:", __version__, file=sys.stdout)
     print("Moment:", get_timestamp(), file=sys.stdout)
     print("Directory:", os.getcwd(), file=sys.stdout)

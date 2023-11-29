@@ -1,4 +1,4 @@
-#!python
+#!/usr/bin/env python
 
 # Built-ins
 import os, sys, argparse, importlib
