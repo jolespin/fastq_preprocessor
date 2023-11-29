@@ -58,7 +58,7 @@ Note: If `pip` is used for installation then it assumes bioinformatics packages 
 
 **Wrapper:** 
 
-```bash
+```
 fastq_preprocessor -h
 usage: fastq_preprocessor [-h] [-c] [-v] {short,long}
 
