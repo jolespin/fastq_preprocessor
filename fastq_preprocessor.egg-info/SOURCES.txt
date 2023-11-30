@@ -4,6 +4,7 @@ README.md
 setup.py
 fastq_preprocessor/__init__.py
 fastq_preprocessor/fastq_preprocessor
+fastq_preprocessor/fastq_preprocessor.py
 fastq_preprocessor/fastq_preprocessor_long.py
 fastq_preprocessor/fastq_preprocessor_short.py
 fastq_preprocessor.egg-info/PKG-INFO

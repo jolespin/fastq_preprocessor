@@ -1,5 +1,5 @@
 {% set name = "fastq_preprocessor" %}
-{% set version = "2023.11.28" %}
+{% set version = "2023.11.29" %}
 
 package:
   name: {{ name|lower }}

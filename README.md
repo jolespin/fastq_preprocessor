@@ -25,7 +25,7 @@ Also includes functionality to filter based on k-mer profiles and is useful for 
 
 `__license__ = "GNU AFFERO GENERAL PUBLIC LICENSE"`
 
-`__version__ = "2023.11.28"`
+`__version__ = "2023.11.29"`
 
 #### Dependencies: 
 

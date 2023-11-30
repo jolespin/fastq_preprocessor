@@ -5,7 +5,7 @@ import os, sys, argparse, importlib
 
 # Version
 __program__ = os.path.split(sys.argv[0])[-1]
-__version__ = "2023.11.28"
+__version__ = "2023.11.29"
 
 # Accepted modules
 accepted_programs = ["short", "long"]

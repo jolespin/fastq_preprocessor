@@ -32,4 +32,6 @@ if __name__ == "__main__":
     # Get the algorithm
     program = main([sys.argv[1]])
     module = importlib.import_module("fastq_preprocessor_{}".format(program))
+    # module.main(sys.argv[2:])
     module.main(sys.argv[2:])
+

@@ -28,6 +28,7 @@ setup(name='fastq_preprocessor',
     include_package_data=True,
      scripts=[
          "fastq_preprocessor/fastq_preprocessor",
+         "fastq_preprocessor/fastq_preprocessor.py",
          "fastq_preprocessor/fastq_preprocessor_short.py",
          "fastq_preprocessor/fastq_preprocessor_long.py",
          ],
