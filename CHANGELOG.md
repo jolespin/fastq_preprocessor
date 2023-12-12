@@ -1,5 +1,8 @@
 **Changes:**
 
+* **2023.11.30**
+	* Changed default output path from `preprocessed/` to `veba_output/preprocess/`
+	
 * **2023.11.28**
 	* Deprecated `bin/` directory in favor of `fastq_preprocessor/`
 	* Wrapped both `fastq_preprocessor_short.py` and `fastq_preprocessor_long.py` with `fastq_preprocessor`. 

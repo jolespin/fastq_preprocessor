@@ -13,7 +13,7 @@ from soothsayer_utils import *
 pd.options.display.max_colwidth = 100
 
 __program__ = os.path.split(sys.argv[0])[-1]
-__version__ = "2023.11.29"
+__version__ = "2023.12.12"
 
 # .............................................................................
 # Primordial
@@ -485,7 +485,7 @@ def main(args=None):
     parser_io.add_argument("-1","--forward_reads", type=str, required=True, help = "path/to/reads_1.fastq[.gz]")
     parser_io.add_argument("-2","--reverse_reads", type=str, required=True, help = "path/to/reads_2.fastq[.gz]")
     parser_io.add_argument("-n", "--name", type=str, help="Name of sample", required=True)
-    parser_io.add_argument("-o","--project_directory", type=str, default="preprocessed", help = "path/to/project_directory [Default: preprocessed]")
+    parser_io.add_argument("-o","--project_directory", type=str, default="veba_output/preprocess", help = "path/to/project_directory [Default: veba_output/preprocess]")
 
     # Utility
     parser_utility = parser.add_argument_group('Utility arguments')
@@ -547,6 +547,7 @@ def main(args=None):
     print("Script version:", __version__, file=sys.stdout)
     print("Moment:", get_timestamp(), file=sys.stdout)
     print("Directory:", os.getcwd(), file=sys.stdout)
+    if "TMPDIR" in os.environ: print(os.environ["TMPDIR"], file=sys.stdout)
     print("Commands:", list(filter(bool,sys.argv)),  sep="\n", file=sys.stdout)
     configure_parameters(opts, directories)
     sys.stdout.flush()

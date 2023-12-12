@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-__version__= "2023.11.29"
+__version__= "2023.12.12"
 __author__ = "Josh L. Espinoza"
 __email__ = "jespinoz@jcvi.org, jol.espinoz@gmail.com"
 __url__ = "https://github.com/jolespin/fastq_preprocessor"
