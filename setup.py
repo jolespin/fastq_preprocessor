@@ -26,11 +26,12 @@ setup(name='fastq_preprocessor',
       "scandir",
       ],
     include_package_data=True,
-     scripts=[
-         "fastq_preprocessor/fastq_preprocessor",
-         "fastq_preprocessor/fastq_preprocessor.py",
-         "fastq_preprocessor/fastq_preprocessor_short.py",
-         "fastq_preprocessor/fastq_preprocessor_long.py",
-         ],
+    entry_points={
+        'console_scripts': [
+            'fastq_preprocessor=fastq_preprocessor.fastq_preprocessor:main',
+            'fastq_preprocessor_short=fastq_preprocessor.fastq_preprocessor_short:main',
+            'fastq_preprocessor_long=fastq_preprocessor.fastq_preprocessor_long:main',
+        ],
+    },
 
 )
