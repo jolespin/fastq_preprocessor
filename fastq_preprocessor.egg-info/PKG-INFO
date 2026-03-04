@@ -1,9 +1,22 @@
-Metadata-Version: 2.1
-Name: fastq-preprocessor
-Version: 2023.12.12
+Metadata-Version: 2.4
+Name: fastq_preprocessor
+Version: 2026.3.3
 Summary: Fast short read fastq preprocessor with optional contamination removal
 Home-page: https://github.com/jolespin/fastq_preprocessor
 Author: Josh L. Espinoza
 Author-email: jespinoz@jcvi.org
 License: GNU AFFERO GENERAL PUBLIC LICENSE
 License-File: LICENSE
+Requires-Dist: genopype>=2023.5.15
+Requires-Dist: soothsayer_utils>=2022.6.24
+Requires-Dist: pandas>=0.24
+Requires-Dist: numpy
+Requires-Dist: tqdm
+Requires-Dist: scandir
+Dynamic: author
+Dynamic: author-email
+Dynamic: home-page
+Dynamic: license
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: summary

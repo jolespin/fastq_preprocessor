@@ -13,7 +13,7 @@ from soothsayer_utils import *
 pd.options.display.max_colwidth = 100
 
 __program__ = os.path.split(sys.argv[0])[-1]
-__version__ = "2023.12.12"
+__version__ = "2026.3.3"
 
 # .............................................................................
 # Primordial
@@ -200,10 +200,9 @@ def get_bbduk_cmd(input_filepaths, output_filepaths, output_directory, directori
 
 # Symlink
 def get_synopsis_cmd(input_filepaths, output_filepaths, output_directory, directories, opts):
-    # Command
     cmd = [
 """
-python -c "import glob, pandas as pd; pd.concat(map(lambda fp: pd.read_csv(fp, sep='\t', index_col=0), glob.glob('{}')), axis=0).to_csv('{}', sep='\t')"
+python -c "import glob, pandas as pd; pd.concat(map(lambda fp: pd.read_csv(fp, sep='\\t', index_col=0), glob.glob('{}')), axis=0).to_csv('{}', sep='\\t')"
 """.format(
             os.path.join(directories["intermediate"],"*/seqkit_stats.tsv"),
             os.path.join(output_directory,"seqkit_stats.concatenated.tsv"),
@@ -211,13 +210,12 @@ python -c "import glob, pandas as pd; pd.concat(map(lambda fp: pd.read_csv(fp, s
         ]
 
     cmd += [
-    "DST={}; (for SRC in {}; do SRC=$(realpath --relative-to $DST $SRC); ln -sf $SRC $DST; done)".format(
+    "DST={}; (for SRC in {}; do REL=$(python -c \"import os; print(os.path.relpath('$SRC', '$DST'))\"); ln -sf $REL $DST; done)".format(
         output_directory,
         " ".join(input_filepaths), 
         )
     ]
         
-
     return cmd
 
 # ============
@@ -517,7 +515,7 @@ def main(args=None):
     parser_bbduk.add_argument("--bbduk_options", type=str, default="", help="BBDuk | More options (e.g., --arg 1) [Default: '']")
 
     # Options
-    opts = parser.parse_args()
+    opts = parser.parse_args(args)
     opts.script_directory  = script_directory
     opts.script_filename = script_filename
 

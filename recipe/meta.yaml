@@ -1,5 +1,5 @@
 {% set name = "fastq_preprocessor" %}
-{% set version = "2023.12.12" %}
+{% set version = "2026.3.3" %}
 
 package:
   name: {{ name|lower }}
@@ -20,6 +20,7 @@ requirements:
   run:
     - python >=3.6
     - samtools >=1.9
+    - setuptools
     - seqkit
     - bbmap
     - fastp
@@ -37,12 +38,12 @@ requirements:
     - coreutils
     - minimap2
     - pigz
-    - chopper
+    - fastplong
 
 about:
   home: https://github.com/jolespin/fastq_preprocessor
-  license: GPL3
-  license_family: GPL3
+  license: Apache 2.0
+  license_family: Apache
   license_file: LICENSE
   summary: 'A fastq preprocessor for short and long read sequencing'
   description: 'A fastq preprocessor for short and long read sequencing. Optional contamination removal'
