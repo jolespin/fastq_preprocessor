@@ -2,13 +2,12 @@
 from __future__ import print_function, division
 import sys, os, argparse, glob
 from collections import OrderedDict
+import datetime
 
 import pandas as pd
+from loguru import logger
 
-# Soothsayer Ecosystem
-from genopype import *
-from genopype import __version__ as genopype_version
-from soothsayer_utils import *
+from ._utils import create_directory, format_path, assert_acceptable_arguments, Pipeline
 
 pd.options.display.max_colwidth = 100
 
@@ -18,12 +17,12 @@ __version__ = "2026.3.3"
 # .............................................................................
 # Primordial
 # .............................................................................
-# Fastp
+# Chopper
 def get_chopper_cmd(input_filepaths, output_filepaths, output_directory, directories, opts):
     os.environ["TMPDIR"] = directories["tmp"]
     # Command
     cmd = [
-    # fastp
+    # chopper
     "(",
     "gunzip -c" if input_filepaths[0].endswith(".gz") else "cat",
     input_filepaths[0],
@@ -121,7 +120,7 @@ def get_minimap2_cmd(input_filepaths, output_filepaths, output_directory, direct
     os.path.join(output_directory, "seqkit_stats.tsv"),
     ]
 
-    # Remove trimmed reads 
+    # Remove trimmed reads
     if not opts.retain_trimmed_reads:
         cmd += [
         "&&",
@@ -133,13 +132,13 @@ def get_minimap2_cmd(input_filepaths, output_filepaths, output_directory, direct
         "&&",
         "rm -rf {}".format(os.path.join( output_directory, "contaminated.fastq.gz")),
         ]
-            
+
     return cmd
 
 # BBDuk
 def get_bbduk_cmd(input_filepaths, output_filepaths, output_directory, directories, opts):
     os.environ["TMPDIR"] = directories["tmp"]
-    cmd = [ 
+    cmd = [
             "(",
         os.environ["bbduk.sh"],
         "zl=1", # Most likely will delete these files
@@ -169,7 +168,6 @@ def get_bbduk_cmd(input_filepaths, output_filepaths, output_directory, directori
         ")",
         ]
 
-
     # Remove bbduk kmer hits
     if not opts.retain_kmer_hits:
         cmd += [
@@ -183,7 +181,6 @@ def get_bbduk_cmd(input_filepaths, output_filepaths, output_directory, directori
         "rm -rf {}".format(os.path.join( output_directory, "non-kmer_hits.fastq.gz")),
         ]
 
-            
     return cmd
 
 
@@ -198,13 +195,15 @@ python -c "import glob, pandas as pd; pd.concat(map(lambda fp: pd.read_csv(fp, s
             ),
         ]
 
+    abs_output_directory = os.path.abspath(output_directory)
     cmd += [
-    "DST={}; (for SRC in {}; do REL=$(python -c \"import os; print(os.path.relpath('$SRC', '$DST'))\"); ln -sf $REL $DST; done)".format(
-        output_directory,
-        " ".join(input_filepaths), 
+    "&&",
+    "DST='{}'; (for SRC in {}; do BASENAME=$(basename \"$SRC\"); REL=$(python -c \"import os; print(os.path.relpath('$SRC', '$DST'))\"); ln -sf \"$REL\" \"$DST/$BASENAME\"; done)".format(
+        abs_output_directory,
+        " ".join(input_filepaths),
         )
     ]
-        
+
     return cmd
 
 # ============
@@ -212,12 +211,9 @@ python -c "import glob, pandas as pd; pd.concat(map(lambda fp: pd.read_csv(fp, s
 # ============
 # Set environment variables
 def add_executables_to_environment(opts):
-    """
-    Adapted from Soothsayer: https://github.com/jolespin/soothsayer
-    """
     accessory_scripts = set([])
 
-    required_executables={
+    required_executables = {
                 # "repair.sh",
                 "pigz",
                 "samtools",
@@ -233,24 +229,30 @@ def add_executables_to_environment(opts):
             executables[name] = os.path.join(os.environ["CONDA_PREFIX"], "bin", name)
     else:
         opts.path_config = format_path(opts.path_config)
-        assert os.path.exists(opts.path_config), "config file does not exist.  Have you created one in the following directory?\n{}\nIf not, either create one, check this filepath:{}, or give the path to a proper config file using --path_config".format(opts.script_directory, opts.path_config)
-        assert os.stat(opts.path_config).st_size > 1, "config file seems to be empty.  Please add 'name' and 'executable' columns for the following program names: {}".format(required_executables)
+        assert os.path.exists(opts.path_config), \
+            "config file does not exist.  Have you created one in the following directory?\n{}\n" \
+            "If not, either create one, check this filepath:{}, or give the path to a proper config file " \
+            "using --path_config".format(opts.script_directory, opts.path_config)
+        assert os.stat(opts.path_config).st_size > 1, \
+            "config file seems to be empty.  Please add 'name' and 'executable' columns for the following " \
+            "program names: {}".format(required_executables)
         df_config = pd.read_csv(opts.path_config, sep="\t")
-        assert {"name", "executable"} <= set(df_config.columns), "config must have `name` and `executable` columns.  Please adjust file: {}".format(opts.path_config)
-        df_config = df_config.loc[:,["name", "executable"]].dropna(how="any", axis=0).applymap(str)
-        # Get executable paths
+        assert {"name", "executable"} <= set(df_config.columns), \
+            "config must have `name` and `executable` columns.  Please adjust file: {}".format(opts.path_config)
+        df_config = df_config.loc[:, ["name", "executable"]].dropna(how="any", axis=0).applymap(str)
         executables = OrderedDict(zip(df_config["name"], df_config["executable"]))
-        assert required_executables <= set(list(executables.keys())), "config must have the required executables for this run.  Please adjust file: {}\nIn particular, add info for the following: {}".format(opts.path_config, required_executables - set(list(executables.keys())))
+        assert required_executables <= set(list(executables.keys())), \
+            "config must have the required executables for this run.  Please adjust file: {}\n" \
+            "In particular, add info for the following: {}".format(
+                opts.path_config, required_executables - set(list(executables.keys())))
 
-    # Display
+    logger.info("Adding executables to path from: {}", opts.path_config)
     for name in sorted(accessory_scripts):
         executables[name] = "python " + os.path.join(opts.script_directory, "scripts", name)
-    print(format_header( "Adding executables to path from the following source: {}".format(opts.path_config), "-"), file=sys.stdout)
     for name, executable in executables.items():
         if name in required_executables:
-            print(name, executable, sep = " --> ", file=sys.stdout)
+            logger.info("  {} --> {}", name, executable)
             os.environ[name] = executable.strip()
-    print("", file=sys.stdout)
 
 # Pipeline
 def create_pipeline(opts, directories, f_cmds):
@@ -259,10 +261,12 @@ def create_pipeline(opts, directories, f_cmds):
     # Primordial
     # .................................................................
     # Commands file
-    pipeline = ExecutablePipeline(name=__program__, description=opts.name, f_cmds=f_cmds, checkpoint_directory=directories["checkpoints"], log_directory=directories["log"])
+    pipeline = Pipeline(name=__program__, description=opts.name, f_cmds=f_cmds,
+                        checkpoint_directory=directories["checkpoints"],
+                        log_directory=directories["log"])
 
     # =========
-    # Fastp
+    # Chopper
     # =========
     step = 1
     program = "chopper"
@@ -306,7 +310,7 @@ def create_pipeline(opts, directories, f_cmds):
     )
 
     # =========
-    # Bowtie2
+    # MiniMap2
     # =========
     if opts.contamination_index:
         step += 1
@@ -320,7 +324,6 @@ def create_pipeline(opts, directories, f_cmds):
         # i/o
         input_filepaths = [
             os.path.join(os.path.join(directories["intermediate"], "1__chopper"), "trimmed.fastq.gz"),
-
         ]
 
         output_filenames = ["cleaned.fastq.gz", "seqkit_stats.tsv"]
@@ -365,12 +368,10 @@ def create_pipeline(opts, directories, f_cmds):
             input_filepaths = [
                 os.path.join(os.path.join(directories["intermediate"], "2__minimap2"), "cleaned.fastq.gz"),
             ]
-
         else:
             # i/o
             input_filepaths = [
                 os.path.join(os.path.join(directories["intermediate"], "1__chopper"), "trimmed.fastq.gz"),
-
             ]
 
         output_filenames = ["seqkit_stats.tsv"]
@@ -397,9 +398,6 @@ def create_pipeline(opts, directories, f_cmds):
                     validate_outputs=True,
         )
 
-
-   
-
     # =============
     # Symlink
     # =============
@@ -408,18 +406,17 @@ def create_pipeline(opts, directories, f_cmds):
     program_label = "{}__{}".format(step, program)
 
     # Add to directories
-    output_directory = directories["output"] 
+    output_directory = directories["output"]
     description = "Symlinking and merging relevant output files"
 
     # i/o
     input_filepaths = [
         os.path.join(directories["intermediate"], "*", "*.fastq.gz"),
     ]
-    
-  
-    output_filenames =  map(lambda fp: fp.split("/")[-1], input_filepaths)
-    output_filepaths = list(map(lambda fn:os.path.join(directories["output"], fn), output_filenames))
-    output_filepaths += [ 
+
+    output_filenames = map(lambda fp: fp.split("/")[-1], input_filepaths)
+    output_filepaths = list(map(lambda fn: os.path.join(directories["output"], fn), output_filenames))
+    output_filepaths += [
         os.path.join(output_directory, "seqkit_stats.concatenated.tsv"),
     ]
     params = {
@@ -447,10 +444,10 @@ def create_pipeline(opts, directories, f_cmds):
 # Configure parameters
 def configure_parameters(opts, directories):
 
-    assert_acceptable_arguments(opts.retain_trimmed_reads, {0,1})
-    assert_acceptable_arguments(opts.retain_contaminated_reads, {0,1})
+    assert_acceptable_arguments(opts.retain_trimmed_reads, {0, 1})
+    assert_acceptable_arguments(opts.retain_contaminated_reads, {0, 1})
     assert_acceptable_arguments(opts.minimap2_preset, {"map-pb", "map-ont", "map-hifi"})
-     
+
     # Set environment variables
     add_executables_to_environment(opts=opts)
 
@@ -490,7 +487,7 @@ def main(args=None):
     parser_minimap2 = parser.add_argument_group('MiniMap2 arguments')
     parser_minimap2.add_argument("-x", "--contamination_index", type=str, help="MiniMap2 | path/to/contamination_index\n(e.g., Human T2T assembly from https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/latest_assembly_versions/GCF_009914755.1_T2T-CHM13v2.0/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna.gz)")
     parser_minimap2.add_argument("--minimap2_preset", type=str, default="map-ont", help="MiniMap2 | MiniMap2 preset {map-pb, map-ont, map-hifi} [Default: map-ont]")
-    parser_minimap2.add_argument("--retain_trimmed_reads", default=0, type=int, help = "Retain Chopper trimmed fastq after decontamination. 0=No, 1=yes [Default: 0]") 
+    parser_minimap2.add_argument("--retain_trimmed_reads", default=0, type=int, help = "Retain Chopper trimmed fastq after decontamination. 0=No, 1=yes [Default: 0]")
     parser_minimap2.add_argument("--retain_contaminated_reads", default=0, type=int, help = "Retain contaminated fastq after decontamination. 0=No, 1=yes [Default: 0]")
     parser_minimap2.add_argument("--minimap2_options", type=str, default="", help="MiniMap2 | More options (e.g. --arg 1 ) [Default: '']\nhttps://github.com/lh3/minimap2")
 
@@ -509,9 +506,9 @@ def main(args=None):
 
     # Threads
     if opts.n_jobs == -1:
-        from multiprocessing import cpu_count 
+        from multiprocessing import cpu_count
         opts.n_jobs = cpu_count()
-    assert opts.n_jobs >= 1, "--n_jobs must be ≥ 1.  To select all available threads, use -1."
+    assert opts.n_jobs >= 1, "--n_jobs must be >= 1.  To select all available threads, use -1."
 
     # Directories
     directories = dict()
@@ -523,21 +520,27 @@ def main(args=None):
     directories["checkpoints"] = create_directory(os.path.join(directories["sample"], "checkpoints"))
     directories["intermediate"] = create_directory(os.path.join(directories["sample"], "intermediate"))
 
-    # Info
-    print(format_header(__program__, "="), file=sys.stdout)
-    print(format_header("Configuration:", "-"), file=sys.stdout)
-    print(format_header("Name: {}".format(opts.name), "."), file=sys.stdout)
-    print("Python version:", sys.version.replace("\n"," "), file=sys.stdout)
-    print("Python path:", sys.executable, file=sys.stdout) #sys.path[2]
-    print("GenoPype version:", genopype_version, file=sys.stdout)
-    print("Script version:", __version__, file=sys.stdout)
-    print("Moment:", get_timestamp(), file=sys.stdout)
-    print("Directory:", os.getcwd(), file=sys.stdout)
-    if "TMPDIR" in os.environ: print(os.environ["TMPDIR"], file=sys.stdout)
-    print("Commands:", list(filter(bool,sys.argv)),  sep="\n", file=sys.stdout)
-    configure_parameters(opts, directories)
-    sys.stdout.flush()
+    # Configure loguru: stderr + file sink
+    logger.remove()
+    logger.add(sys.stderr, format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | {message}")
+    logger.add(os.path.join(directories["log"], "fastq_preprocessor.log"),
+               format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {message}")
 
+    # Info
+    logger.info("=" * 60)
+    logger.info("Program: {}", __program__)
+    logger.info("Version: {}", __version__)
+    logger.info("Name: {}", opts.name)
+    logger.info("Python version: {}", sys.version.replace("\n", " "))
+    logger.info("Python path: {}", sys.executable)
+    logger.info("Moment: {}", datetime.datetime.now().isoformat())
+    logger.info("Directory: {}", os.getcwd())
+    if "TMPDIR" in os.environ:
+        logger.info("TMPDIR: {}", os.environ["TMPDIR"])
+    logger.info("Commands: {}", list(filter(bool, sys.argv)))
+    logger.info("=" * 60)
+
+    configure_parameters(opts, directories)
 
     # Run pipeline
     with open(os.path.join(directories["sample"], "commands.sh"), "w") as f_cmds:
