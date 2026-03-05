@@ -1,5 +1,5 @@
 **Changes:**
-
+* [2026.3.5] - Removed `GenoPype` dependency to now use `sh` [issue/#7](https://github.com/jolespin/fastq_preprocessor/issues/7)
 * [2026.3.3] - Changed `scripts` to `entrypoints` [issue/#5](https://github.com/jolespin/fastq_preprocessor/issues/5)
 * [2023.11.30] - Changed default output path from `preprocessed/` to `veba_output/preprocess/`
 * [2023.11.28] - Deprecated `bin/` directory in favor of `fastq_preprocessor/`
