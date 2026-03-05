@@ -7,12 +7,9 @@ Author: Josh L. Espinoza
 Author-email: jespinoz@jcvi.org
 License: GNU AFFERO GENERAL PUBLIC LICENSE
 License-File: LICENSE
-Requires-Dist: genopype>=2023.5.15
-Requires-Dist: soothsayer_utils>=2022.6.24
+Requires-Dist: sh
+Requires-Dist: loguru
 Requires-Dist: pandas>=0.24
-Requires-Dist: numpy
-Requires-Dist: tqdm
-Requires-Dist: scandir
 Dynamic: author
 Dynamic: author-email
 Dynamic: home-page
