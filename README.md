@@ -9,7 +9,7 @@
 ```
 #### Description:
 
-A fastq preprocessor for short and long read sequencing. For short reads, it is a wrapper around `fastp` for a standardized directory structure and can optionally feed the trimmed reads into `bowtie2` if an index is provided to decontaminate sequences similar to `kneaddata` (useful in metagenomics to remove host reads). For long reads, it uses `chopper` instead of `fastp` and `minimap2` instead of `bowtie2`.
+A fastq preprocessor for short and long read sequencing. For short reads, it is a wrapper around `fastp` for a standardized directory structure and can optionally feed the trimmed reads into `bowtie2` if an index is provided to decontaminate sequences similar to `kneaddata` (useful in metagenomics to remove host reads). For long reads, it uses `fastplong` instead of `fastp` and `minimap2` instead of `bowtie2`.
 
 Also includes functionality to filter based on k-mer profiles and is useful for quantifying the amount of ribosomal reads.  At each stage, `seqkit stats` is run so there are read stats that can be used post hoc.  
 
@@ -36,7 +36,7 @@ Also includes functionality to filter based on k-mer profiles and is useful for 
 * bowtie2
 * minimap2
 * samtools
-* chopper
+* fastplong
 
 ##### Python packages: 
 * pandas
