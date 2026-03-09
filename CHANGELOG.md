@@ -1,4 +1,5 @@
 **Changes:**
+* [2026.3.9] - Replaced `chopper` with `fastplong` for long-read quality trimming; fastplong handles gzipped I/O natively and generates HTML/JSON reports
 * [2026.3.5] - Removed `GenoPype` dependency to now use `sh` [issue/#7](https://github.com/jolespin/fastq_preprocessor/issues/7)
 * [2026.3.3] - Changed `scripts` to `entrypoints` [issue/#5](https://github.com/jolespin/fastq_preprocessor/issues/5)
 * [2023.11.30] - Changed default output path from `preprocessed/` to `veba_output/preprocess/`

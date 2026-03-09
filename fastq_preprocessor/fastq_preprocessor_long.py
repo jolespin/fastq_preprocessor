@@ -17,26 +17,21 @@ __version__ = "2026.3.3"
 # .............................................................................
 # Primordial
 # .............................................................................
-# Chopper
-def get_chopper_cmd(input_filepaths, output_filepaths, output_directory, directories, opts):
+# Fastplong
+def get_fastplong_cmd(input_filepaths, output_filepaths, output_directory, directories, opts):
     os.environ["TMPDIR"] = directories["tmp"]
     # Command
     cmd = [
-    # chopper
     "(",
-    "gunzip -c" if input_filepaths[0].endswith(".gz") else "cat",
-    input_filepaths[0],
-    "|",
-    os.environ["chopper"],
+    os.environ["fastplong"],
+    "-i {}".format(input_filepaths[0]),
+    "-o {}".format(os.path.join(output_directory, "trimmed.fastq.gz")),
     "-l {}".format(opts.minimum_read_length),
     "-q {}".format(opts.minimum_quality_score),
-    "--threads {}".format(opts.n_jobs),
-    opts.chopper_options,
-    "|",
-    os.environ["pigz"],
-    "-p {}".format(opts.n_jobs),
-    ">",
-    os.path.join(output_directory, "trimmed.fastq.gz"),
+    "-w {}".format(opts.n_jobs),
+    "-h {}".format(os.path.join(output_directory, "fastplong.html")),
+    "-j {}".format(os.path.join(output_directory, "fastplong.json")),
+    opts.fastplong_options,
     ")",
     # Seqkit
     "&&",
@@ -124,7 +119,7 @@ def get_minimap2_cmd(input_filepaths, output_filepaths, output_directory, direct
     if not opts.retain_trimmed_reads:
         cmd += [
         "&&",
-        "rm -rf {}".format(os.path.join( directories[("intermediate",  "1__chopper")], "trimmed.fastq.gz")),
+        "rm -rf {}".format(os.path.join( directories[("intermediate",  "1__fastplong")], "trimmed.fastq.gz")),
         ]
     # Remove decontaminated reads
     if not opts.retain_contaminated_reads:
@@ -219,7 +214,7 @@ def add_executables_to_environment(opts):
                 "samtools",
                 "bbduk.sh",
                 "minimap2",
-                "chopper",
+                "fastplong",
                 "seqkit",
     } | accessory_scripts
 
@@ -266,10 +261,10 @@ def create_pipeline(opts, directories, f_cmds):
                         log_directory=directories["log"])
 
     # =========
-    # Chopper
+    # Fastplong
     # =========
     step = 1
-    program = "chopper"
+    program = "fastplong"
     program_label = "{}__{}".format(step, program)
     # Add to directories
     output_directory = directories[("intermediate",  program_label)] = create_directory(os.path.join(directories["intermediate"], program_label))
@@ -283,9 +278,9 @@ def create_pipeline(opts, directories, f_cmds):
         bool(opts.contamination_index),
         not bool(opts.retain_trimmed_reads),
     ]):
-        output_filenames = ["seqkit_stats.tsv"]
+        output_filenames = ["fastplong.html", "fastplong.json", "seqkit_stats.tsv"]
     else:
-        output_filenames = ["trimmed.fastq.gz", "seqkit_stats.tsv"]
+        output_filenames = ["trimmed.fastq.gz", "fastplong.html", "fastplong.json", "seqkit_stats.tsv"]
     output_filepaths = list(map(lambda filename: os.path.join(output_directory, filename), output_filenames))
 
     # Parameters
@@ -297,7 +292,7 @@ def create_pipeline(opts, directories, f_cmds):
         "directories":directories,
     }
     # Command
-    cmd = get_chopper_cmd(**params)
+    cmd = get_fastplong_cmd(**params)
     pipeline.add_step(
                 id=program,
                 description = description,
@@ -323,7 +318,7 @@ def create_pipeline(opts, directories, f_cmds):
         description = "Decontaminate reads based on a reference"
         # i/o
         input_filepaths = [
-            os.path.join(os.path.join(directories["intermediate"], "1__chopper"), "trimmed.fastq.gz"),
+            os.path.join(os.path.join(directories["intermediate"], "1__fastplong"), "trimmed.fastq.gz"),
         ]
 
         output_filenames = ["cleaned.fastq.gz", "seqkit_stats.tsv"]
@@ -371,7 +366,7 @@ def create_pipeline(opts, directories, f_cmds):
         else:
             # i/o
             input_filepaths = [
-                os.path.join(os.path.join(directories["intermediate"], "1__chopper"), "trimmed.fastq.gz"),
+                os.path.join(os.path.join(directories["intermediate"], "1__fastplong"), "trimmed.fastq.gz"),
             ]
 
         output_filenames = ["seqkit_stats.tsv"]
@@ -477,17 +472,17 @@ def main(args=None):
     parser_utility.add_argument("--restart_from_checkpoint", type=int, help = "Restart from a particular checkpoint")
     parser_utility.add_argument("-v", "--version", action='version', version="{} v{}".format(__program__, __version__))
 
-    # Chopper
-    parser_chopper = parser.add_argument_group('Chopper arguments')
-    parser_chopper.add_argument("-m", "--minimum_read_length", type=int, default=500, help="Chopper | Minimum read length [Default: 500]")
-    parser_chopper.add_argument("-q", "--minimum_quality_score", type=int, default=10, help="Chopper | Minimum quality score [Default: 10]")
-    parser_chopper.add_argument("--chopper_options", type=str, default="", help="Chopper | More options (e.g. --arg 1 ) https://github.com/wdecoster/chopper [Default: '']")
+    # Fastplong
+    parser_fastplong = parser.add_argument_group('Fastplong arguments')
+    parser_fastplong.add_argument("-m", "--minimum_read_length", type=int, default=500, help="Fastplong | Minimum read length [Default: 500]")
+    parser_fastplong.add_argument("-q", "--minimum_quality_score", type=int, default=10, help="Fastplong | Minimum quality score [Default: 10]")
+    parser_fastplong.add_argument("--fastplong_options", type=str, default="", help="Fastplong | More options (e.g. --arg 1 ) https://github.com/OpenGene/fastplong [Default: '']")
 
     # MiniMap2
     parser_minimap2 = parser.add_argument_group('MiniMap2 arguments')
     parser_minimap2.add_argument("-x", "--contamination_index", type=str, help="MiniMap2 | path/to/contamination_index\n(e.g., Human T2T assembly from https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/latest_assembly_versions/GCF_009914755.1_T2T-CHM13v2.0/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna.gz)")
     parser_minimap2.add_argument("--minimap2_preset", type=str, default="map-ont", help="MiniMap2 | MiniMap2 preset {map-pb, map-ont, map-hifi} [Default: map-ont]")
-    parser_minimap2.add_argument("--retain_trimmed_reads", default=0, type=int, help = "Retain Chopper trimmed fastq after decontamination. 0=No, 1=yes [Default: 0]")
+    parser_minimap2.add_argument("--retain_trimmed_reads", default=0, type=int, help = "Retain Fastplong trimmed fastq after decontamination. 0=No, 1=yes [Default: 0]")
     parser_minimap2.add_argument("--retain_contaminated_reads", default=0, type=int, help = "Retain contaminated fastq after decontamination. 0=No, 1=yes [Default: 0]")
     parser_minimap2.add_argument("--minimap2_options", type=str, default="", help="MiniMap2 | More options (e.g. --arg 1 ) [Default: '']\nhttps://github.com/lh3/minimap2")
 
