@@ -78,6 +78,7 @@ class Pipeline:
                         raise FileNotFoundError("[Step {}] Input not found: {}".format(step_num, fp))
 
             cmd_str = self._cmd_to_str(step_info["cmd"])
+            logger.info("[Step {}] Command: {}", step_num, cmd_str)
             log_base = os.path.join(self.log_directory, "{}__{}" .format(step_num, step_id))
 
             returncode = 0
