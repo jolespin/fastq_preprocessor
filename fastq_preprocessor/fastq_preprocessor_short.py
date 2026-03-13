@@ -38,6 +38,7 @@ def get_fastp_cmd(input_filepaths, output_filepaths, output_directory, directori
     "-l {}".format(opts.minimum_read_length),
     "--thread {}".format(opts.n_jobs),
     {"detect":"--detect_adapter_for_pe"}.get(opts.adapters, "--adapter_fasta {}".format(opts.adapters)), # Use --detect_adapter_for_pe by default unless a fasta path is given
+    "--low_complexity_filter" if opts.low_complexity_filter else "",
     opts.fastp_options,
     # reformat.sh
     "|",
@@ -496,6 +497,7 @@ def main(args=None):
     parser_fastp = parser.add_argument_group('Fastp arguments')
     parser_fastp.add_argument("-m", "--minimum_read_length", type=int, default=75, help="Fastp | Minimum read length [Default: 75]")
     parser_fastp.add_argument("-a", "--adapters", type=str, default="detect", help="Fastp | path/to/adapters.fasta [Default: detect]")
+    parser_fastp.add_argument("--low_complexity_filter", default=1, type=int, help="Fastp | Enable low complexity filter. 0=No, 1=Yes [Default: 1]")
     parser_fastp.add_argument("--fastp_options", type=str, default="", help="Fastp | More options (e.g. --arg 1 ) [Default: '']")
 
     # Bowtie

@@ -31,6 +31,7 @@ def get_fastplong_cmd(input_filepaths, output_filepaths, output_directory, direc
     "-w {}".format(opts.n_jobs),
     "-h {}".format(os.path.join(output_directory, "fastplong.html")),
     "-j {}".format(os.path.join(output_directory, "fastplong.json")),
+    "--low_complexity_filter" if opts.low_complexity_filter else "",
     opts.fastplong_options,
     ")",
     # Seqkit
@@ -476,6 +477,7 @@ def main(args=None):
     parser_fastplong = parser.add_argument_group('Fastplong arguments')
     parser_fastplong.add_argument("-m", "--minimum_read_length", type=int, default=500, help="Fastplong | Minimum read length [Default: 500]")
     parser_fastplong.add_argument("-q", "--minimum_quality_score", type=int, default=10, help="Fastplong | Minimum quality score [Default: 10]")
+    parser_fastplong.add_argument("--low_complexity_filter", default=1, type=int, help="Fastplong | Enable low complexity filter. 0=No, 1=Yes [Default: 1]")
     parser_fastplong.add_argument("--fastplong_options", type=str, default="", help="Fastplong | More options (e.g. --arg 1 ) https://github.com/OpenGene/fastplong [Default: '']")
 
     # MiniMap2
