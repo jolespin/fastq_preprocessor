@@ -54,6 +54,7 @@ def get_fastp_cmd(input_filepaths, output_filepaths, output_directory, directori
     "(",
     os.environ["seqkit"],
     "stats",
+    "-a",
     "-T",
     "-j {}".format(opts.n_jobs),
     input_filepaths[0],
