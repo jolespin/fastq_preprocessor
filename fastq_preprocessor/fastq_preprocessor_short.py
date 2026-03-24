@@ -12,7 +12,7 @@ from ._utils import create_directory, format_path, assert_acceptable_arguments, 
 pd.options.display.max_colwidth = 100
 
 __program__ = os.path.split(sys.argv[0])[-1]
-__version__ = "2025.3.24"
+__version__ = "2026.3.24"
 
 # .............................................................................
 # Primordial

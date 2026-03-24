@@ -25,7 +25,7 @@ Also includes functionality to filter based on k-mer profiles and is useful for 
 
 `__license__ = "Apache 2.0"`
 
-`__version__ = "2025.3.24"`
+`__version__ = "2026.3.24"`
 
 #### Dependencies: 
 
@@ -79,7 +79,7 @@ optional arguments:
 fastq_preprocessor short -h
 usage: fastq_preprocessor -1 <reads_1.fq> -2 <reads_2.fq> -n <name> -o <output_directory> |Optional| -x <reference_index> -k <kmer_database>
 
-    Running: fastq_preprocessor v2025.3.24 via Python v3.9.9 | /Users/jespinoz/anaconda3/bin/python
+    Running: fastq_preprocessor v2026.3.24 via Python v3.9.9 | /Users/jespinoz/anaconda3/bin/python
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -148,7 +148,7 @@ Copyright 2022 Josh L. Espinoza (jespinoz@jcvi.org)
 fastq_preprocessor long -h
 usage: fastq_preprocessor -i <reads.fq[.gz]> -n <name> -o <output_directory> |Optional| -x <reference_index> -k <kmer_database>
 
-    Running: fastq_preprocessor v2025.3.24 via Python v3.9.9 | /Users/jespinoz/anaconda3/bin/python
+    Running: fastq_preprocessor v2026.3.24 via Python v3.9.9 | /Users/jespinoz/anaconda3/bin/python
 
 optional arguments:
   -h, --help            show this help message and exit
