@@ -12,7 +12,7 @@ from ._utils import create_directory, format_path, assert_acceptable_arguments, 
 pd.options.display.max_colwidth = 100
 
 __program__ = os.path.split(sys.argv[0])[-1]
-__version__ = "2026.3.3"
+__version__ = "2025.3.24"
 
 # .............................................................................
 # Primordial
@@ -484,7 +484,7 @@ def main(args=None):
     parser_io.add_argument("-1","--forward_reads", type=str, required=True, help = "path/to/reads_1.fastq[.gz]")
     parser_io.add_argument("-2","--reverse_reads", type=str, required=True, help = "path/to/reads_2.fastq[.gz]")
     parser_io.add_argument("-n", "--name", type=str, help="Name of sample", required=True)
-    parser_io.add_argument("-o","--project_directory", type=str, default="veba_output/preprocess", help = "path/to/project_directory [Default: veba_output/preprocess]")
+    parser_io.add_argument("-o","--project_directory", type=str, default="preprocessed", help = "path/to/project_directory [Default: preprocessed]")
 
     # Utility
     parser_utility = parser.add_argument_group('Utility arguments')

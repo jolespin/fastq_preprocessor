@@ -1,5 +1,5 @@
 {% set name = "fastq_preprocessor" %}
-{% set version = "2026.3.3" %}
+{% set version = "2025.3.24" %}
 
 package:
   name: {{ name|lower }}
@@ -19,23 +19,14 @@ requirements:
     - setuptools
   run:
     - python >=3.6
+    - sh
+    - loguru
+    - pandas >=0.24
     - samtools >=1.9
-    - setuptools
     - seqkit
     - bbmap
     - fastp
     - bowtie2
-    - pandas >=0.24.2
-    - scandir
-    - tqdm
-    - bz2file
-    - tzlocal
-    - pathlib2
-    - requests
-    - numpy >=1.11
-    - soothsayer_utils >=2022.6.24
-    - genopype >=2023.5.15
-    - coreutils
     - minimap2
     - pigz
     - fastplong

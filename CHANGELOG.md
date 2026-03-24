@@ -1,8 +1,9 @@
 **Changes:**
-* [2026.3.13] - Added `--low_complexity_filter` to both `fastq_preprocessor_short.py` and `fastq_preprocessor_long.py` [issue/#6](https://github.com/jolespin/fastq_preprocessor/issues/6)
-* [2026.3.9] - Replaced `chopper` with `fastplong` for long-read quality trimming; fastplong handles gzipped I/O natively and generates HTML/JSON reports
-* [2026.3.5] - Removed `GenoPype` dependency to now use `sh` [issue/#7](https://github.com/jolespin/fastq_preprocessor/issues/7)
-* [2026.3.3] - Changed `scripts` to `entrypoints` [issue/#5](https://github.com/jolespin/fastq_preprocessor/issues/5)
+* [2025.3.24] - Changed default output path from `veba_output/preprocess/` back to `preprocessed/`
+* [2025.3.13] - Added `--low_complexity_filter` to both `fastq_preprocessor_short.py` and `fastq_preprocessor_long.py` [issue/#6](https://github.com/jolespin/fastq_preprocessor/issues/6)
+* [2025.3.9] - Replaced `chopper` with `fastplong` for long-read quality trimming; fastplong handles gzipped I/O natively and generates HTML/JSON reports
+* [2025.3.5] - Removed `GenoPype` dependency to now use `sh` [issue/#7](https://github.com/jolespin/fastq_preprocessor/issues/7)
+* [2025.3.3] - Changed `scripts` to `entrypoints` [issue/#5](https://github.com/jolespin/fastq_preprocessor/issues/5)
 * [2023.11.30] - Changed default output path from `preprocessed/` to `veba_output/preprocess/`
 * [2023.11.28] - Deprecated `bin/` directory in favor of `fastq_preprocessor/`
 * [2023.11.28] - Wrapped both `fastq_preprocessor_short.py` and `fastq_preprocessor_long.py` with `fastq_preprocessor`. 
