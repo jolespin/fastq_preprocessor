@@ -12,7 +12,7 @@ from ._utils import create_directory, format_path, assert_acceptable_arguments, 
 pd.options.display.max_colwidth = 100
 
 __program__ = os.path.split(sys.argv[0])[-1]
-__version__ = "2026.3.24"
+from fastq_preprocessor import __version__
 
 # .............................................................................
 # Primordial
@@ -518,9 +518,10 @@ def main(args=None):
     directories["checkpoints"] = create_directory(os.path.join(directories["sample"], "checkpoints"))
     directories["intermediate"] = create_directory(os.path.join(directories["sample"], "intermediate"))
 
-    # Configure loguru: stderr + file sink
+    # Configure loguru: stdout for all levels, stderr for errors, and file sink
     logger.remove()
-    logger.add(sys.stderr, format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | {message}")
+    logger.add(sys.stdout, format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | {message}")
+    logger.add(sys.stderr, format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | {message}", level="ERROR")
     logger.add(os.path.join(directories["log"], "fastq_preprocessor.log"),
                format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {message}")
 

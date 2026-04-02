@@ -6,7 +6,7 @@ package:
   version: {{ version }}
 
 source:
-  url: https://github.com/jolespin/fastq_preprocessor/releases/download/v{{version}}/fastq_preprocessor-{{version}}.tar.gz
+  url: https://github.com/jolespin/fastq_preprocessor/archive/refs/tags/v{{version}}.tar.gz
 
 build:
   noarch: python

@@ -5,7 +5,7 @@ import os, sys, argparse, importlib
 
 # Version
 __program__ = os.path.split(sys.argv[0])[-1]
-__version__ = "2026.3.24"
+from fastq_preprocessor import __version__
 
 # Accepted modules
 accepted_programs = ["short", "long"]
