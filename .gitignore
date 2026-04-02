@@ -1,6 +1,10 @@
 CLAUDE.md
 .claude/
 
+# Ignore Python distribution artifacts
+*.egg-info/
+*.egg-info/PKG-INFO
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

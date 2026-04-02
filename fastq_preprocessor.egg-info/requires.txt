@@ -1,3 +1,0 @@
-sh
-loguru
-pandas>=0.24

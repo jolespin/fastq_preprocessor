@@ -1,4 +1,5 @@
 **Changes:**
+* [2026.4.2] - Changed `loguru` logging to write to `stdout` by default with errors also reported to `stderr`
 * [2026.3.24] - Changed default output path from `veba_output/preprocess/` back to `preprocessed/`
 * [2026.3.13] - Added `--low_complexity_filter` to both `fastq_preprocessor_short.py` and `fastq_preprocessor_long.py` [issue/#6](https://github.com/jolespin/fastq_preprocessor/issues/6)
 * [2026.3.9] - Replaced `chopper` with `fastplong` for long-read quality trimming; fastplong handles gzipped I/O natively and generates HTML/JSON reports
