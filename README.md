@@ -25,7 +25,7 @@ Also includes functionality to filter based on k-mer profiles and is useful for 
 
 `__license__ = "Apache 2.0"`
 
-`__version__ = "2026.3.24"`
+`__version__ = "2026.4.9"`
 
 #### Dependencies: 
 
@@ -33,10 +33,11 @@ Also includes functionality to filter based on k-mer profiles and is useful for 
 * bbmap
 * fastp
 * seqkit
-* bowtie2
 * minimap2
 * samtools
 * fastplong
+* strobealign
+* bowtie2 (deprecating)
 
 ##### Python packages:
 * pandas
@@ -78,8 +79,6 @@ optional arguments:
 ```
 fastq_preprocessor short -h
 usage: fastq_preprocessor -1 <reads_1.fq> -2 <reads_2.fq> -n <name> -o <output_directory> |Optional| -x <reference_index> -k <kmer_database>
-
-    Running: fastq_preprocessor v2026.3.24 via Python v3.9.9 | /Users/jespinoz/anaconda3/bin/python
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -139,14 +138,12 @@ BBDuk arguments:
   --bbduk_options BBDUK_OPTIONS
                         BBDuk | More options (e.g., --arg 1) [Default: '']
 
-Copyright 2022 Josh L. Espinoza (jespinoz@jcvi.org)
 ```
 
 **Oxford Nanopore and PacBio reads (`long`)**
 
 ```
 fastq_preprocessor long -h
-usage: fastq_preprocessor -i <reads.fq[.gz]> -n <name> -o <output_directory> |Optional| -x <reference_index> -k <kmer_database>
 
     Running: fastq_preprocessor v2026.3.24 via Python v3.9.9 | /Users/jespinoz/anaconda3/bin/python
 
@@ -207,8 +204,53 @@ BBDuk arguments:
                         Retain reads that do not map to k-mer database. 0=No, 1=yes [Default: 0]
   --bbduk_options BBDUK_OPTIONS
                         BBDuk | More options (e.g., --arg 1) [Default: '']
+```
 
-Copyright 2022 Josh L. Espinoza (jespinoz@jcvi.org)
+**Split aligned reads with strobealign (`strobealign_split_reads`)**
 
+Wraps `strobealign` to split aligned output into mapped and unmapped paired-end FASTQ files — analogous to bowtie2's `--al-conc` / `--un-conc` flags. All unrecognized arguments are forwarded directly to `strobealign`.
+
+```
+strobealign_split_reads -h
+usage: strobealign_split_reads [strobealign_options] reference reads1 reads2 --mapped_fastq PATH --unmapped_fastq PATH
+
+Required I/O arguments:
+  reference             Reference FASTA for strobealign
+  reads1                Forward reads FASTQ
+  reads2                Reverse reads FASTQ
+  --mapped_fastq        Output path for mapped reads.
+                        Use % for paired: mapped_%.fastq.gz -> mapped_1.fastq.gz, mapped_2.fastq.gz
+                        Without %: interleaved output
+  --unmapped_fastq      Output path for unmapped reads.
+                        Use % for paired: unmapped_%.fastq.gz -> unmapped_1.fastq.gz, unmapped_2.fastq.gz
+                        Without %: interleaved output
+
+Utility arguments:
+  -t, --threads         Threads for strobealign [Default: 1]
+  --samtools_threads    Threads for samtools fastq gzip compression [Default: 1]
+  --no_repair           Disable repair.sh post-processing
+  -T, --temporary_prefix
+                        Temp prefix for samtools collate and named pipes [Default: /tmp/strobealign_split_reads]
+  -v, --version         show program's version number and exit
+```
+
+Example — split into paired files:
+```
+strobealign_split_reads -t 8 \
+  reference.fasta.gz \
+  reads_1.fastq.gz \
+  reads_2.fastq.gz \
+  --mapped_fastq output/mapped_%.fastq.gz \
+  --unmapped_fastq output/unmapped_%.fastq.gz
+```
+
+Example — split into interleaved files:
+```
+strobealign_split_reads -t 8 \
+  reference.fasta.gz \
+  reads_1.fastq.gz \
+  reads_2.fastq.gz \
+  --mapped_fastq output/mapped.fastq.gz \
+  --unmapped_fastq output/unmapped.fastq.gz
 ```
 

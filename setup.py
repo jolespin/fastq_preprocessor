@@ -28,6 +28,7 @@ setup(name='fastq_preprocessor',
             'fastq_preprocessor=fastq_preprocessor.fastq_preprocessor:main',
             'fastq_preprocessor_short=fastq_preprocessor.fastq_preprocessor_short:main',
             'fastq_preprocessor_long=fastq_preprocessor.fastq_preprocessor_long:main',
+            'strobealign_split_reads=fastq_preprocessor.strobealign_split_reads:main',
         ],
     },
 
