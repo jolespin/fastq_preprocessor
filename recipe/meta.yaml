@@ -1,5 +1,5 @@
 {% set name = "fastq_preprocessor" %}
-{% set version = "2026.4.2" %}
+{% set version = "2026.4.9" %}
 
 package:
   name: {{ name|lower }}
@@ -30,6 +30,7 @@ requirements:
     - minimap2
     - pigz
     - fastplong
+    - strobealign
 
 about:
   home: https://github.com/jolespin/fastq_preprocessor
