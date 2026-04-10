@@ -1,4 +1,6 @@
 **Changes:**
+* [2026.4.10] - Fixed `strobealign` index support: replaced `-i/--contamination_index` with `-i/--use_index` boolean flag that maps to strobealign's native `--use-index` [issue/#24](https://github.com/jolespin/fastq_preprocessor/issues/24)
+* [2026.4.10] - Added `-c/--compression_level` to `strobealign_split_reads` (default 6) applied to both `samtools fastq -c` and `repair.sh zl=` for consistent gzip compression
 * [2026.4.10] - Added `--bam` flag to `strobealign_split_reads` for coordinate-sorted BAM output
 * [2026.4.10] - Changed `--temporary_prefix` to `-T/--temporary_directory` in `strobealign_split_reads` with task-specific prefixes derived internally
 * [2026.4.10] - Generalized `strobealign_split_reads` consumer architecture to support 1–3 concurrent outputs in any combination
