@@ -1,4 +1,6 @@
 **Changes:**
+* [2026.4.9] - Replaced `bowtie2` with `strobealign` in `fastq_preprocessor_short` [issue/#3](https://github.com/jolespin/fastq_preprocessor/issues/3)
+* [2026.4.9] - Added `strobealign_split_reads` wrapper [issue/#13](https://github.com/jolespin/fastq_preprocessor/issues/13)
 * [2026.4.2] - Simplified `__version__` imports
 * [2026.4.2] - Changed `loguru` logging to write to `stdout` by default with errors also reported to `stderr`
 * [2026.3.24] - Changed default output path from `veba_output/preprocess/` back to `preprocessed/`
