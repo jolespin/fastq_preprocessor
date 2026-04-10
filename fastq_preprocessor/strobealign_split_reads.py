@@ -48,8 +48,8 @@ def resolve_output_paths(path):
     if "%" in path:
         return {
             "paired": True,
-            "path_1": path.replace("%", "_1"),
-            "path_2": path.replace("%", "_2"),
+            "path_1": path.replace("%", "1"),
+            "path_2": path.replace("%", "2"),
             "path": path,
         }
     else:

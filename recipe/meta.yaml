@@ -26,7 +26,6 @@ requirements:
     - seqkit
     - bbmap
     - fastp
-    - bowtie2
     - minimap2
     - pigz
     - fastplong

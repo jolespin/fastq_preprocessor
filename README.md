@@ -9,7 +9,7 @@
 ```
 #### Description:
 
-A fastq preprocessor for short and long read sequencing. For short reads, it is a wrapper around `fastp` for a standardized directory structure and can optionally feed the trimmed reads into `bowtie2` if an index is provided to decontaminate sequences similar to `kneaddata` (useful in metagenomics to remove host reads). For long reads, it uses `fastplong` instead of `fastp` and `minimap2` instead of `bowtie2`.
+A fastq preprocessor for short and long read sequencing. For short reads, it is a wrapper around `fastp` for a standardized directory structure and can optionally feed the trimmed reads into `strobealign` if a reference FASTA or pre-built index is provided to decontaminate sequences similar to `kneaddata` (useful in metagenomics to remove host reads). For long reads, it uses `fastplong` instead of `fastp` and `minimap2` instead of `strobealign`.
 
 Also includes functionality to filter based on k-mer profiles and is useful for quantifying the amount of ribosomal reads.  At each stage, `seqkit stats` is run so there are read stats that can be used post hoc.  
 
@@ -37,7 +37,7 @@ Also includes functionality to filter based on k-mer profiles and is useful for 
 * samtools
 * fastplong
 * strobealign
-* bowtie2 (deprecating)
+* bowtie2 (deprecated, replaced by strobealign)
 
 ##### Python packages:
 * pandas
@@ -78,7 +78,7 @@ optional arguments:
 
 ```
 fastq_preprocessor short -h
-usage: fastq_preprocessor -1 <reads_1.fq> -2 <reads_2.fq> -n <name> -o <output_directory> |Optional| -x <reference_index> -k <kmer_database>
+usage: fastq_preprocessor -1 <reads_1.fq> -2 <reads_2.fq> -n <name> -o <output_directory> |Optional| -x <contamination_reference.fasta> | -i <contamination_index> -k <kmer_database>
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -113,17 +113,19 @@ Fastp arguments:
   --fastp_options FASTP_OPTIONS
                         Fastp | More options (e.g. --arg 1 ) [Default: '']
 
-Bowtie2 arguments:
-  -x CONTAMINATION_INDEX, --contamination_index CONTAMINATION_INDEX
-                        Bowtie2 | path/to/contamination_index
-                        (e.g., Human T2T assembly from https://genome-idx.s3.amazonaws.com/bt/chm13v2.0.zip)
+Strobealign arguments:
+  -x CONTAMINATION_FASTA, --contamination_fasta CONTAMINATION_FASTA
+                        Strobealign | path/to/contamination_reference.fasta[.gz] (raw FASTA; index built on the fly)
+                        (e.g., Human T2T assembly from https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/latest_assembly_versions/GCF_009914755.1_T2T-CHM13v2.0/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna.gz)
+  -i CONTAMINATION_INDEX, --contamination_index CONTAMINATION_INDEX
+                        Strobealign | path/to/contamination_index (pre-built strobealign .sti index; uses --use-index)
   --retain_trimmed_reads RETAIN_TRIMMED_READS
                         Retain fastp trimmed fastq after decontamination. 0=No, 1=yes [Default: 0]
   --retain_contaminated_reads RETAIN_CONTAMINATED_READS
                         Retain contaminated fastq after decontamination. 0=No, 1=yes [Default: 0]
-  --bowtie2_options BOWTIE2_OPTIONS
-                        Bowtie2 | More options (e.g. --arg 1 ) [Default: '']
-                        http://bowtie-bio.sourceforge.net/bowtie2/manual.shtml
+  --strobealign_options STROBEALIGN_OPTIONS
+                        Strobealign | More options (e.g. --arg 1 ) [Default: '']
+                        https://github.com/ksahlin/strobealign
 
 BBDuk arguments:
   -k KMER_DATABASE, --kmer_database KMER_DATABASE
@@ -220,10 +222,10 @@ Required I/O arguments:
   reads2                Reverse reads FASTQ
   --mapped_fastq        Output path for mapped reads.
                         Use % for paired: mapped_%.fastq.gz -> mapped_1.fastq.gz, mapped_2.fastq.gz
-                        Without %: interleaved output
+                        Without %: interleaved output. % is replaced with 1 or 2.
   --unmapped_fastq      Output path for unmapped reads.
                         Use % for paired: unmapped_%.fastq.gz -> unmapped_1.fastq.gz, unmapped_2.fastq.gz
-                        Without %: interleaved output
+                        Without %: interleaved output. % is replaced with 1 or 2.
 
 Utility arguments:
   -t, --threads         Threads for strobealign [Default: 1]
