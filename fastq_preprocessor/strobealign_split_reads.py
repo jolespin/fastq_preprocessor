@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 from __future__ import print_function, division
 import sys, os, argparse, atexit
 from subprocess import (
@@ -124,6 +125,7 @@ def build_cmd(opts, strobealign_extra_args):
     # Resolve output paths
     mapped_info = resolve_output_paths(opts.mapped_fastq) if opts.mapped_fastq else None
     unmapped_info = resolve_output_paths(opts.unmapped_fastq) if opts.unmapped_fastq else None
+    bam_path = opts.bam if hasattr(opts, "bam") else None
 
     # Create output directories
     for info in [mapped_info, unmapped_info]:
@@ -133,6 +135,11 @@ def build_cmd(opts, strobealign_extra_args):
                 create_directory(os.path.dirname(info["path_2"]))
             else:
                 create_directory(os.path.dirname(info["path"]))
+    if bam_path:
+        create_directory(os.path.dirname(os.path.abspath(bam_path)))
+
+    # Create temporary directory
+    create_directory(opts.temporary_directory)
 
     # Build producer
     extra_args = " ".join(strobealign_extra_args) if strobealign_extra_args else ""
@@ -145,54 +152,91 @@ def build_cmd(opts, strobealign_extra_args):
             r2=opts.reads2,
         ),
         "samtools view -h -",
-        "samtools collate -u -O - {prefix}".format(prefix=opts.temporary_prefix),
+        "samtools collate -u -O - {prefix}".format(prefix=os.path.join(opts.temporary_directory, "samtools_collate")),
     ]
     producer = " | ".join(producer_tokens)
 
     has_mapped = mapped_info is not None
     has_unmapped = unmapped_info is not None
+    has_bam = bam_path is not None
 
-    if has_mapped and has_unmapped:
-        # Both outputs: tee + named pipes
-        mapped_fifo = "{}_mapped_fifo".format(opts.temporary_prefix)
-        unmapped_fifo = "{}_unmapped_fifo".format(opts.temporary_prefix)
-        fifo_paths.extend([mapped_fifo, unmapped_fifo])
+    # Build consumer commands
+    consumers = []
+    if has_mapped:
+        consumers.append(("mapped", build_consumer_cmd(
+            "-F 12", opts.samtools_threads, None, mapped_info, opts.no_repair,
+        )))
+    if has_unmapped:
+        consumers.append(("unmapped", build_consumer_cmd(
+            "-f 12", opts.samtools_threads, None, unmapped_info, opts.no_repair,
+        )))
+    if has_bam:
+        consumers.append(("bam", "samtools sort -@ {threads} -T {tmp} -o {out} -".format(
+            threads=opts.samtools_threads,
+            tmp=os.path.join(opts.temporary_directory, "samtools_sort"),
+            out=bam_path,
+        )))
 
-        parts.append("mkfifo {} {}".format(mapped_fifo, unmapped_fifo))
+    if len(consumers) == 0:
+        # Should not happen due to validation, but just in case
+        parts.append(producer + " > /dev/null")
+
+    elif len(consumers) == 1:
+        # Single consumer: direct pipe, no fifos
+        label, consumer_cmd = consumers[0]
+        # Replace the placeholder input with stdin
+        consumer_cmd = _set_consumer_input(consumer_cmd, label, "-")
+        parts.append("{} | {}".format(producer, consumer_cmd))
+
+    else:
+        # Multiple consumers: use named pipes for all but the last
+        # Last consumer reads from stdout via >
+        fifos = []
+        for i, (label, consumer_cmd) in enumerate(consumers[:-1]):
+            fifo = os.path.join(opts.temporary_directory, "{}_fifo".format(label))
+            fifos.append(fifo)
+            fifo_paths.append(fifo)
+            consumer_cmd = _set_consumer_input(consumer_cmd, label, fifo)
+            parts.append("")  # blank line for readability
+            parts.append("{} &".format(consumer_cmd))
+
+        # Last consumer reads from the final fifo via >
+        last_label, last_consumer_cmd = consumers[-1]
+        last_fifo = os.path.join(opts.temporary_directory, "{}_fifo".format(last_label))
+        fifos.append(last_fifo)
+        fifo_paths.append(last_fifo)
+        last_consumer_cmd = _set_consumer_input(last_consumer_cmd, last_label, last_fifo)
         parts.append("")
+        parts.append("{} &".format(last_consumer_cmd))
 
-        mapped_consumer = build_consumer_cmd(
-            "-F 12", opts.samtools_threads, mapped_fifo, mapped_info, opts.no_repair,
-        )
-        parts.append("{} &".format(mapped_consumer))
+        # mkfifo at the top
+        parts.insert(0, "mkfifo {}".format(" ".join(fifos)))
+
+        # Producer tees to all fifos except last, stdout goes to last
+        tee_targets = fifos[:-1]
         parts.append("")
-
-        unmapped_consumer = build_consumer_cmd(
-            "-f 12", opts.samtools_threads, unmapped_fifo, unmapped_info, opts.no_repair,
-        )
-        parts.append("{} &".format(unmapped_consumer))
-        parts.append("")
-
-        parts.append("{} | tee {} > {}".format(producer, mapped_fifo, unmapped_fifo))
+        parts.append("{} | tee {} > {}".format(producer, " ".join(tee_targets), fifos[-1]))
         parts.append("")
         parts.append("wait")
-        parts.append("rm -f {} {}".format(mapped_fifo, unmapped_fifo))
-
-    elif has_mapped:
-        # Only mapped: direct pipe with -F 12
-        mapped_consumer = build_consumer_cmd(
-            "-F 12", opts.samtools_threads, "-", mapped_info, opts.no_repair,
-        )
-        parts.append("{} | {}".format(producer, mapped_consumer))
-
-    elif has_unmapped:
-        # Only unmapped: direct pipe with -f 12
-        unmapped_consumer = build_consumer_cmd(
-            "-f 12", opts.samtools_threads, "-", unmapped_info, opts.no_repair,
-        )
-        parts.append("{} | {}".format(producer, unmapped_consumer))
+        parts.append("rm -f {}".format(" ".join(fifos)))
 
     return "\n".join(parts)
+
+
+def _set_consumer_input(consumer_cmd, label, input_path):
+    """Replace the placeholder input in a consumer command.
+    
+    For bam consumers, append the input path.
+    For fastq consumers, the input was built with None as placeholder.
+    """
+    if label == "bam":
+        # samtools sort command ends with '- ', replace trailing '-' with actual input
+        if consumer_cmd.endswith(" -"):
+            return consumer_cmd[:-1] + input_path
+        return consumer_cmd
+    else:
+        # fastq consumer commands have None as the input placeholder
+        return consumer_cmd.replace("None", input_path)
 
 
 # =============
@@ -207,7 +251,7 @@ def main(args=None):
     Running: {} v{} via Python v{} | {}""".format(
         __program__, __version__, sys.version.split(" ")[0], sys.executable,
     )
-    usage = "{} [strobealign_options] reference reads1 reads2 --mapped_fastq PATH --unmapped_fastq PATH".format(__program__)
+    usage = "{} [strobealign_options] reference reads1 reads2 --mapped_fastq PATH --unmapped_fastq PATH --bam PATH".format(__program__)
     epilog = "Strobealign help:\n\n{}".format(get_strobealign_help())
 
     # Parser
@@ -226,21 +270,23 @@ def main(args=None):
                            help="Output path for mapped reads.\nUse %% for paired: mapped_%%.fastq.gz -> mapped_1.fastq.gz, mapped_2.fastq.gz\nWithout %%: interleaved output")
     parser_io.add_argument("--unmapped_fastq", type=str, default=None,
                            help="Output path for unmapped reads.\nUse %% for paired: unmapped_%%.fastq.gz -> unmapped_1.fastq.gz, unmapped_2.fastq.gz\nWithout %%: interleaved output")
+    parser_io.add_argument("--bam", type=str, default=None,
+                           help="Output path for coordinate-sorted BAM file")
 
     parser_utility = parser.add_argument_group('Utility arguments')
     parser_utility.add_argument("-t", "--threads", type=int, default=1, help="Threads for strobealign [Default: 1]")
-    parser_utility.add_argument("--samtools_threads", type=int, default=1, help="Threads for samtools fastq gzip compression [Default: 1]")
+    parser_utility.add_argument("--samtools_threads", type=int, default=1, help="Threads for samtools fastq/sort [Default: 1]")
     parser_utility.add_argument("--no_repair", action="store_true", default=False, help="Disable repair.sh post-processing")
-    parser_utility.add_argument("-T", "--temporary_prefix", type=str, default="/tmp/strobealign_split_reads",
-                                help="Temp prefix for samtools collate and named pipes [Default: /tmp/strobealign_split_reads]")
+    parser_utility.add_argument("-T", "--temporary_directory", type=str, default="/tmp/strobealign_split_reads",
+                                help="Temporary directory for samtools collate/sort and named pipes [Default: /tmp/strobealign_split_reads]")
     parser_utility.add_argument("-v", "--version", action="version", version="{} v{}".format(__program__, __version__))
 
     # Parse
     opts, strobealign_extra_args = parser.parse_known_args(args)
 
     # Validate
-    if opts.mapped_fastq is None and opts.unmapped_fastq is None:
-        parser.error("At least one of --mapped_fastq or --unmapped_fastq must be provided")
+    if opts.mapped_fastq is None and opts.unmapped_fastq is None and opts.bam is None:
+        parser.error("At least one of --mapped_fastq, --unmapped_fastq, or --bam must be provided")
 
     for label, path in [("--mapped_fastq", opts.mapped_fastq), ("--unmapped_fastq", opts.unmapped_fastq)]:
         if path is not None and path.count("%") > 1:
@@ -254,10 +300,15 @@ def main(args=None):
         opts.mapped_fastq = format_path(opts.mapped_fastq)
     if opts.unmapped_fastq is not None:
         opts.unmapped_fastq = format_path(opts.unmapped_fastq)
+    if opts.bam is not None:
+        opts.bam = format_path(opts.bam)
 
     assert os.path.exists(opts.reference), "Reference not found: {}".format(opts.reference)
     assert os.path.exists(opts.reads1), "Forward reads not found: {}".format(opts.reads1)
     assert os.path.exists(opts.reads2), "Reverse reads not found: {}".format(opts.reads2)
+
+    # Create temporary directory
+    create_directory(opts.temporary_directory)
 
     # Configure logger
     logger.remove()
@@ -273,10 +324,11 @@ def main(args=None):
     logger.info("Reads 2: {}", opts.reads2)
     logger.info("Mapped FASTQ: {}", opts.mapped_fastq)
     logger.info("Unmapped FASTQ: {}", opts.unmapped_fastq)
+    logger.info("BAM: {}", opts.bam)
     logger.info("Threads: {}", opts.threads)
     logger.info("Samtools threads: {}", opts.samtools_threads)
     logger.info("Repair: {}", not opts.no_repair)
-    logger.info("Temporary prefix: {}", opts.temporary_prefix)
+    logger.info("Temporary directory: {}", opts.temporary_directory)
     if strobealign_extra_args:
         logger.info("Strobealign extra args: {}", " ".join(strobealign_extra_args))
     logger.info("=" * 60)

@@ -1,4 +1,7 @@
 **Changes:**
+* [2026.4.10] - Added `--bam` flag to `strobealign_split_reads` for coordinate-sorted BAM output
+* [2026.4.10] - Changed `--temporary_prefix` to `-T/--temporary_directory` in `strobealign_split_reads` with task-specific prefixes derived internally
+* [2026.4.10] - Generalized `strobealign_split_reads` consumer architecture to support 1–3 concurrent outputs in any combination
 * [2026.4.9] - Replaced `bowtie2` with `strobealign` in `fastq_preprocessor_short` [issue/#3](https://github.com/jolespin/fastq_preprocessor/issues/3)
 * [2026.4.9] - Added `strobealign_split_reads` wrapper [issue/#13](https://github.com/jolespin/fastq_preprocessor/issues/13)
 * [2026.4.2] - Simplified `__version__` imports
