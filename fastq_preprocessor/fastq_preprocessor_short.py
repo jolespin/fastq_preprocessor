@@ -159,7 +159,7 @@ def get_strobealign_cmd(input_filepaths, output_filepaths, output_directory, dir
         threads=opts.n_jobs,
         samtools_threads=1,
         no_repair=False,
-        temporary_prefix=os.path.join(directories["tmp"], "strobealign_split_reads"),
+        temporary_directory=directories["tmp"],
         unmapped_fastq=os.path.join(output_directory, "cleaned_%.fastq.gz"),
         mapped_fastq=os.path.join(output_directory, "contaminated_%.fastq.gz"),
     )
@@ -551,7 +551,7 @@ def main(args=None):
     # Path info
     description = """
     Running: {} v{} via Python v{} | {}""".format(__program__, __version__, sys.version.split(" ")[0], sys.executable)
-    usage = "{} -1 <reads_1.fq> -2 <reads_2.fq> -n <name> -o <output_directory> |Optional| -x <contamination_reference.fasta> | -i <contamination_index> -k <kmer_database>".format(__program__)
+    usage = "{} -1 <reads_1.fq> -2 <reads_2.fq> -n <n> -o <output_directory> |Optional| -x <contamination_reference.fasta> | -i <contamination_index> -k <kmer_database>".format(__program__)
     epilog = "Copyright 2022 Josh L. Espinoza (jespinoz@jcvi.org)"
 
     # Parser
