@@ -207,13 +207,13 @@ BBDuk arguments:
                         BBDuk | More options (e.g., --arg 1) [Default: '']
 ```
 
-**Split aligned reads with strobealign (`strobealign_split_reads`)**
+**Strobealign wrapper (`strobealign_wrapper`)**
 
-Wraps `strobealign` to split aligned output into mapped and unmapped paired-end FASTQ files — analogous to bowtie2's `--al-conc` / `--un-conc` flags. All unrecognized arguments are forwarded directly to `strobealign`.
+Wraps `strobealign` to split aligned output into mapped and unmapped paired-end FASTQ files and/or coordinate-sorted BAM files. All unrecognized arguments are forwarded directly to `strobealign`.
 
 ```
-strobealign_split_reads -h
-usage: strobealign_split_reads [strobealign_options] reference reads1 reads2 --mapped_fastq PATH --unmapped_fastq PATH
+strobealign_wrapper -h
+usage: strobealign_wrapper [strobealign_options] reference reads1 reads2 --mapped_fastq PATH --unmapped_fastq PATH --bam PATH
 
 Required I/O arguments:
   reference             Reference FASTA for strobealign
@@ -230,14 +230,14 @@ Utility arguments:
   -t, --threads         Threads for strobealign [Default: 1]
   --samtools_threads    Threads for samtools fastq gzip compression [Default: 1]
   --no_repair           Disable repair.sh post-processing
-  -T, --temporary_prefix
-                        Temp prefix for samtools collate and named pipes [Default: /tmp/strobealign_split_reads]
+  -T, --temporary_directory
+                        Temporary directory for samtools collate/sort and named pipes [Default: /tmp/strobealign_wrapper]
   -v, --version         show program's version number and exit
 ```
 
 Example — split into paired files:
 ```
-strobealign_split_reads -t 8 \
+strobealign_wrapper -t 8 \
   reference.fasta.gz \
   reads_1.fastq.gz \
   reads_2.fastq.gz \
@@ -247,7 +247,7 @@ strobealign_split_reads -t 8 \
 
 Example — split into interleaved files:
 ```
-strobealign_split_reads -t 8 \
+strobealign_wrapper -t 8 \
   reference.fasta.gz \
   reads_1.fastq.gz \
   reads_2.fastq.gz \

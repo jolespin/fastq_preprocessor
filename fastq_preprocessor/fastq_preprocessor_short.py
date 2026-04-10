@@ -8,7 +8,7 @@ import pandas as pd
 from loguru import logger
 
 from ._utils import create_directory, format_path, assert_acceptable_arguments, Pipeline
-from .strobealign_split_reads import build_cmd as strobealign_build_cmd
+from .strobealign_wrapper import build_cmd as strobealign_build_cmd
 
 pd.options.display.max_colwidth = 100
 

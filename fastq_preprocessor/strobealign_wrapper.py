@@ -282,8 +282,8 @@ def main(args=None):
     parser_utility.add_argument("--samtools_threads", type=int, default=1, help="Threads for samtools fastq/sort [Default: 1]")
     parser_utility.add_argument("--no_repair", action="store_true", default=False, help="Disable repair.sh post-processing")
     parser_utility.add_argument("-c", "--compression_level", type=int, default=6, help="Compression level [0..9] for samtools fastq bgzf output [Default: 6]")
-    parser_utility.add_argument("-T", "--temporary_directory", type=str, default="/tmp/strobealign_split_reads",
-                                help="Temporary directory for samtools collate/sort and named pipes [Default: /tmp/strobealign_split_reads]")
+    parser_utility.add_argument("-T", "--temporary_directory", type=str, default="/tmp/strobealign_wrapper",
+                                help="Temporary directory for samtools collate/sort and named pipes [Default: /tmp/strobealign_wrapper]")
     parser_utility.add_argument("-v", "--version", action="version", version="{} v{}".format(__program__, __version__))
 
     # Parse
