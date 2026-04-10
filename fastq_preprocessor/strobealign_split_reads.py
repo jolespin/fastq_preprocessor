@@ -62,17 +62,18 @@ def resolve_output_paths(path):
         }
 
 
-def build_consumer_cmd(samtools_flag, samtools_threads, fifo_or_stdin, output_info, no_repair):
+def build_consumer_cmd(samtools_flag, samtools_threads, fifo_or_stdin, output_info, no_repair, compression_level=6):
     paired = output_info["paired"]
 
     if paired and not no_repair:
         # Paired with repair
         cmd = (
-            "samtools fastq -@ {threads} {flag} -0 /dev/null -s /dev/null -n {input}"
-            " | repair.sh repair=t overwrite=t threads=1 in=stdin.fastq"
+            "samtools fastq -@ {threads} -c {compression_level} {flag} -0 /dev/null -s /dev/null -n {input}"
+            " | repair.sh repair=t overwrite=t zl={compression_level} threads=1 in=stdin.fastq"
             " out1={out1} out2={out2}"
         ).format(
             threads=samtools_threads,
+            compression_level=compression_level,
             flag=samtools_flag,
             input=fifo_or_stdin,
             out1=output_info["path_1"],
@@ -81,11 +82,12 @@ def build_consumer_cmd(samtools_flag, samtools_threads, fifo_or_stdin, output_in
     elif paired and no_repair:
         # Paired without repair
         cmd = (
-            "samtools fastq -@ {threads} {flag}"
+            "samtools fastq -@ {threads} -c {compression_level} {flag}"
             " -1 {out1} -2 {out2}"
             " -0 /dev/null -s /dev/null -n {input}"
         ).format(
             threads=samtools_threads,
+            compression_level=compression_level,
             flag=samtools_flag,
             out1=output_info["path_1"],
             out2=output_info["path_2"],
@@ -94,11 +96,12 @@ def build_consumer_cmd(samtools_flag, samtools_threads, fifo_or_stdin, output_in
     elif not paired and not no_repair:
         # Interleaved with repair
         cmd = (
-            "samtools fastq -@ {threads} {flag} -0 /dev/null -s /dev/null -n {input}"
-            " | repair.sh repair=t overwrite=t threads=1 in=stdin.fastq"
+            "samtools fastq -@ {threads} -c {compression_level} {flag} -0 /dev/null -s /dev/null -n {input}"
+            " | repair.sh repair=t overwrite=t zl={compression_level} threads=1 in=stdin.fastq"
             " out={out}"
         ).format(
             threads=samtools_threads,
+            compression_level=compression_level,
             flag=samtools_flag,
             input=fifo_or_stdin,
             out=output_info["path"],
@@ -106,11 +109,12 @@ def build_consumer_cmd(samtools_flag, samtools_threads, fifo_or_stdin, output_in
     else:
         # Interleaved without repair
         cmd = (
-            "samtools fastq -@ {threads} {flag}"
+            "samtools fastq -@ {threads} -c {compression_level} {flag}"
             " -0 /dev/null -s /dev/null -n {input}"
             " > {out}"
         ).format(
             threads=samtools_threads,
+            compression_level=compression_level,
             flag=samtools_flag,
             input=fifo_or_stdin,
             out=output_info["path"],
@@ -119,7 +123,7 @@ def build_consumer_cmd(samtools_flag, samtools_threads, fifo_or_stdin, output_in
     return cmd
 
 
-def build_cmd(opts, strobealign_extra_args):
+def build_cmd(opts, strobealign_extra_args, compression_level=6):
     parts = []
 
     # Resolve output paths
@@ -164,11 +168,11 @@ def build_cmd(opts, strobealign_extra_args):
     consumers = []
     if has_mapped:
         consumers.append(("mapped", build_consumer_cmd(
-            "-F 12", opts.samtools_threads, None, mapped_info, opts.no_repair,
+            "-F 12", opts.samtools_threads, None, mapped_info, opts.no_repair, compression_level,
         )))
     if has_unmapped:
         consumers.append(("unmapped", build_consumer_cmd(
-            "-f 12", opts.samtools_threads, None, unmapped_info, opts.no_repair,
+            "-f 12", opts.samtools_threads, None, unmapped_info, opts.no_repair, compression_level,
         )))
     if has_bam:
         consumers.append(("bam", "samtools sort -@ {threads} -T {tmp} -o {out} -".format(
@@ -277,6 +281,7 @@ def main(args=None):
     parser_utility.add_argument("-t", "--threads", type=int, default=1, help="Threads for strobealign [Default: 1]")
     parser_utility.add_argument("--samtools_threads", type=int, default=1, help="Threads for samtools fastq/sort [Default: 1]")
     parser_utility.add_argument("--no_repair", action="store_true", default=False, help="Disable repair.sh post-processing")
+    parser_utility.add_argument("-c", "--compression_level", type=int, default=6, help="Compression level [0..9] for samtools fastq bgzf output [Default: 6]")
     parser_utility.add_argument("-T", "--temporary_directory", type=str, default="/tmp/strobealign_split_reads",
                                 help="Temporary directory for samtools collate/sort and named pipes [Default: /tmp/strobealign_split_reads]")
     parser_utility.add_argument("-v", "--version", action="version", version="{} v{}".format(__program__, __version__))
@@ -328,13 +333,14 @@ def main(args=None):
     logger.info("Threads: {}", opts.threads)
     logger.info("Samtools threads: {}", opts.samtools_threads)
     logger.info("Repair: {}", not opts.no_repair)
+    logger.info("Compression level: {}", opts.compression_level)
     logger.info("Temporary directory: {}", opts.temporary_directory)
     if strobealign_extra_args:
         logger.info("Strobealign extra args: {}", " ".join(strobealign_extra_args))
     logger.info("=" * 60)
 
     # Build and execute
-    cmd_str = build_cmd(opts, strobealign_extra_args)
+    cmd_str = build_cmd(opts, strobealign_extra_args, compression_level=opts.compression_level)
     logger.info("Command:\n{}", cmd_str)
     run(["bash", "-c", cmd_str], check=True)
     logger.success("Completed successfully")

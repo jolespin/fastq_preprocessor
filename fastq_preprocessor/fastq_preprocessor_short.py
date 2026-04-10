@@ -164,15 +164,15 @@ def get_strobealign_cmd(input_filepaths, output_filepaths, output_directory, dir
         mapped_fastq=os.path.join(output_directory, "contaminated_%.fastq.gz"),
     )
 
-    # Build extra args: --use-index if pre-built index, plus user-supplied options
+    # Build extra args: --use-index flag, plus user-supplied options
     strobealign_extra_args = []
-    if opts.contamination_index:
+    if opts.use_index:
         strobealign_extra_args.append("--use-index")
     if opts.strobealign_options:
         strobealign_extra_args += opts.strobealign_options.split()
 
     # Generate bash script via strobealign wrapper
-    bash_script = strobealign_build_cmd(strobealign_opts, strobealign_extra_args)
+    bash_script = strobealign_build_cmd(strobealign_opts, strobealign_extra_args, compression_level=6)
 
     # Ensure conda bin is in PATH for bare tool names used by build_cmd
     path_prefix = "export PATH={}:$PATH".format(os.path.join(os.environ["CONDA_PREFIX"], "bin"))
@@ -531,15 +531,7 @@ def configure_parameters(opts, directories):
     assert_acceptable_arguments(opts.retain_trimmed_reads, {0, 1})
     assert_acceptable_arguments(opts.retain_contaminated_reads, {0, 1})
 
-    # Resolve contamination reference
-    # When using a pre-built index (-i), strobealign still expects the FASTA as the
-    # positional argument and finds the .sti file automatically based on the FASTA path.
-    # So we derive the FASTA path by stripping the .rXXX.sti suffix from the index path.
-    if opts.contamination_index:
-        fasta_path = opts.contamination_index.rsplit(".r", 1)[0]
-        opts.contamination_reference = fasta_path
-    else:
-        opts.contamination_reference = opts.contamination_fasta
+    opts.contamination_reference = opts.contamination_fasta
 
     # Set environment variables
     add_executables_to_environment(opts=opts)
@@ -551,7 +543,7 @@ def main(args=None):
     # Path info
     description = """
     Running: {} v{} via Python v{} | {}""".format(__program__, __version__, sys.version.split(" ")[0], sys.executable)
-    usage = "{} -1 <reads_1.fq> -2 <reads_2.fq> -n <n> -o <output_directory> |Optional| -x <contamination_reference.fasta> | -i <contamination_index> -k <kmer_database>".format(__program__)
+    usage = "{} -1 <reads_1.fq> -2 <reads_2.fq> -n <n> -o <output_directory> |Optional| -x <contamination_reference.fasta> [-i/--use_index] -k <kmer_database>".format(__program__)
     epilog = "Copyright 2022 Josh L. Espinoza (jespinoz@jcvi.org)"
 
     # Parser
@@ -580,9 +572,8 @@ def main(args=None):
 
     # Strobealign
     parser_strobealign = parser.add_argument_group('Strobealign arguments')
-    contamination_group = parser_strobealign.add_mutually_exclusive_group()
-    contamination_group.add_argument("-x", "--contamination_fasta", type=str, help="Strobealign | path/to/contamination_reference.fasta[.gz] (raw FASTA; index built on the fly)\n(e.g., Human T2T assembly from https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/latest_assembly_versions/GCF_009914755.1_T2T-CHM13v2.0/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna.gz)")
-    contamination_group.add_argument("-i", "--contamination_index", type=str, help="Strobealign | path/to/contamination_index (pre-built strobealign .sti index; uses --use-index)")
+    parser_strobealign.add_argument("-x", "--contamination_fasta", type=str, help="Strobealign | path/to/contamination_reference.fasta[.gz]\n(e.g., Human T2T assembly from https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/latest_assembly_versions/GCF_009914755.1_T2T-CHM13v2.0/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna.gz)")
+    parser_strobealign.add_argument("-i", "--use_index", action="store_true", default=False, help="Strobealign | Use pre-built .sti index (must exist next to the FASTA). Maps to strobealign --use-index.")
     parser_strobealign.add_argument("--retain_trimmed_reads", default=0, type=int, help = "Retain fastp trimmed fastq after decontamination. 0=No, 1=yes [Default: 0]")
     parser_strobealign.add_argument("--retain_contaminated_reads", default=0, type=int, help = "Retain contaminated fastq after decontamination. 0=No, 1=yes [Default: 0]")
     parser_strobealign.add_argument("--strobealign_options", type=str, default="", help="Strobealign | More options (e.g. --arg 1 ) [Default: '']\nhttps://github.com/ksahlin/strobealign")

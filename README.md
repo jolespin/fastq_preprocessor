@@ -78,7 +78,7 @@ optional arguments:
 
 ```
 fastq_preprocessor short -h
-usage: fastq_preprocessor -1 <reads_1.fq> -2 <reads_2.fq> -n <name> -o <output_directory> |Optional| -x <contamination_reference.fasta> | -i <contamination_index> -k <kmer_database>
+usage: fastq_preprocessor -1 <reads_1.fq> -2 <reads_2.fq> -n <name> -o <output_directory> |Optional| -x <contamination_reference.fasta> [-i/--use_index] -k <kmer_database>
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -115,10 +115,9 @@ Fastp arguments:
 
 Strobealign arguments:
   -x CONTAMINATION_FASTA, --contamination_fasta CONTAMINATION_FASTA
-                        Strobealign | path/to/contamination_reference.fasta[.gz] (raw FASTA; index built on the fly)
+                        Strobealign | path/to/contamination_reference.fasta[.gz]
                         (e.g., Human T2T assembly from https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/latest_assembly_versions/GCF_009914755.1_T2T-CHM13v2.0/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna.gz)
-  -i CONTAMINATION_INDEX, --contamination_index CONTAMINATION_INDEX
-                        Strobealign | path/to/contamination_index (pre-built strobealign .sti index; uses --use-index)
+  -i, --use_index       Strobealign | Use pre-built .sti index (must exist next to the FASTA). Maps to strobealign --use-index.
   --retain_trimmed_reads RETAIN_TRIMMED_READS
                         Retain fastp trimmed fastq after decontamination. 0=No, 1=yes [Default: 0]
   --retain_contaminated_reads RETAIN_CONTAMINATED_READS
