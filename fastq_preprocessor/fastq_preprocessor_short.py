@@ -8,6 +8,7 @@ import pandas as pd
 from loguru import logger
 
 from ._utils import create_directory, format_path, assert_acceptable_arguments, Pipeline
+from .strobealign_wrapper import build_cmd as strobealign_build_cmd
 
 pd.options.display.max_colwidth = 100
 
@@ -68,54 +69,120 @@ def get_fastp_cmd(input_filepaths, output_filepaths, output_directory, directori
     ]
     return cmd
 
-# Bowtie2
-def get_bowtie2_cmd(input_filepaths, output_filepaths, output_directory, directories, opts):
+# --- DEPRECATED: bowtie2 (commented out, replaced by strobealign) ---
+# def get_bowtie2_cmd(input_filepaths, output_filepaths, output_directory, directories, opts):
+#     os.environ["TMPDIR"] = directories["tmp"]
+#     # Command
+#     cmd = [
+#     "(",
+#     os.environ["bowtie2"],
+#     "-x {}".format(opts.contamination_index),
+#     "-p {}".format(opts.n_jobs),
+#     "-1 {}".format(input_filepaths[0]),
+#     "-2 {}".format(input_filepaths[1]),
+#     "--seed {}".format(opts.random_state),
+#     # "--un-gz {}".format(os.path.join(output_directory, "cleaned_singletons.fastq.gz")), #write unpaired reads that didn't align to <path>
+#     # "--al-gz {}".format(os.path.join(output_directory, "contaminated_singletons.fastq.gz")), #write unpaired reads that aligned at least once to <path>
+#     "--un-conc {}".format(os.path.join(output_directory, "TMP__cleaned_%.fastq")), #write pairs that didn't align concordantly to <path>
+#     "--al-conc {}".format(os.path.join(output_directory, "TMP__contaminated_%.fastq")),#write pairs that aligned concordantly at least once to <path>
+#     # "--met-file {}".format(os.path.join(output_directory, "bowtie2_metrics.txt")),
+#     opts.bowtie2_options,
+#     ">",
+#     "/dev/null",
+#     ")",
+#     "&&",
+#     # Repair decontaminated
+#    "(",
+#     os.environ["repair.sh"],
+#     "in1={}".format(os.path.join(output_directory, "TMP__cleaned_1.fastq")),
+#     "in2={}".format(os.path.join(output_directory, "TMP__cleaned_2.fastq")),
+#     "out1={}".format(os.path.join(output_directory, "cleaned_1.fastq.gz")),
+#     "out2={}".format(os.path.join(output_directory, "cleaned_2.fastq.gz")),
+#     "overwrite=t",
+#     ")",
+#     "&&",
+#     "rm {}".format(os.path.join(output_directory, "TMP__cleaned_*.fastq")),
+#     "&&",
+#     # Repair contaminated
+#    "(",
+#     os.environ["repair.sh"],
+#     "in1={}".format(os.path.join(output_directory, "TMP__contaminated_1.fastq")),
+#     "in2={}".format(os.path.join(output_directory, "TMP__contaminated_2.fastq")),
+#     "out1={}".format(os.path.join(output_directory, "contaminated_1.fastq.gz")),
+#     "out2={}".format(os.path.join(output_directory, "contaminated_2.fastq.gz")),
+#     "overwrite=t",
+#     ")",
+#     "&&",
+#     "rm {}".format(os.path.join(output_directory, "TMP__contaminated_*.fastq")),
+#     ]
+#
+#     cmd += [
+#     # Seqkit
+#     "&&",
+#     "(",
+#     os.environ["seqkit"],
+#     "stats",
+#     "-T",
+#     "-j {}".format(opts.n_jobs),
+#     os.path.join(output_directory, "*.fastq.gz"),
+#
+#     ">",
+#     os.path.join(output_directory, "seqkit_stats.tsv"),
+#     ")",
+#     ]
+#
+#     # Remove trimmed reads
+#     if not opts.retain_trimmed_reads:
+#         cmd += [
+#         "&&",
+#         "rm -rf {}".format(os.path.join( directories[("intermediate",  "1__fastp")], "*.fastq.gz")),
+#         ]
+#     # Remove decontaminated reads
+#     if not opts.retain_contaminated_reads:
+#         cmd += [
+#         "&&",
+#         "rm -rf {}".format(os.path.join( output_directory, "contaminated_*.fastq.gz")),
+#         ]
+#
+#     return cmd
+# --- END DEPRECATED bowtie2 ---
+
+# Strobealign
+def get_strobealign_cmd(input_filepaths, output_filepaths, output_directory, directories, opts):
     os.environ["TMPDIR"] = directories["tmp"]
-    # Command
+
+    # Build synthetic namespace for strobealign_build_cmd
+    strobealign_opts = argparse.Namespace(
+        reference=opts.contamination_reference,
+        reads1=input_filepaths[0],
+        reads2=input_filepaths[1],
+        threads=opts.n_jobs,
+        samtools_threads=1,
+        no_repair=False,
+        temporary_directory=directories["tmp"],
+        unmapped_fastq=os.path.join(output_directory, "cleaned_%.fastq.gz"),
+        mapped_fastq=os.path.join(output_directory, "contaminated_%.fastq.gz"),
+    )
+
+    # Build extra args: --use-index flag, plus user-supplied options
+    strobealign_extra_args = []
+    if opts.use_index:
+        strobealign_extra_args.append("--use-index")
+    if opts.strobealign_options:
+        strobealign_extra_args += opts.strobealign_options.split()
+
+    # Generate bash script via strobealign wrapper
+    bash_script = strobealign_build_cmd(strobealign_opts, strobealign_extra_args, compression_level=6)
+
+    # Ensure conda bin is in PATH for bare tool names used by build_cmd
+    path_prefix = "export PATH={}:$PATH".format(os.path.join(os.environ["CONDA_PREFIX"], "bin"))
+
     cmd = [
     "(",
-    os.environ["bowtie2"],
-    "-x {}".format(opts.contamination_index),
-    "-p {}".format(opts.n_jobs),
-    "-1 {}".format(input_filepaths[0]),
-    "-2 {}".format(input_filepaths[1]),
-    "--seed {}".format(opts.random_state),
-    # "--un-gz {}".format(os.path.join(output_directory, "cleaned_singletons.fastq.gz")), #write unpaired reads that didn't align to <path>
-    # "--al-gz {}".format(os.path.join(output_directory, "contaminated_singletons.fastq.gz")), #write unpaired reads that aligned at least once to <path>
-    "--un-conc {}".format(os.path.join(output_directory, "TMP__cleaned_%.fastq")), #write pairs that didn't align concordantly to <path>
-    "--al-conc {}".format(os.path.join(output_directory, "TMP__contaminated_%.fastq")),#write pairs that aligned concordantly at least once to <path>
-    # "--met-file {}".format(os.path.join(output_directory, "bowtie2_metrics.txt")),
-    opts.bowtie2_options,
-    ">",
-    "/dev/null",
+    path_prefix,
+    "&&",
+    bash_script,
     ")",
-    "&&",
-    # Repair decontaminated
-   "(",
-    os.environ["repair.sh"],
-    "in1={}".format(os.path.join(output_directory, "TMP__cleaned_1.fastq")),
-    "in2={}".format(os.path.join(output_directory, "TMP__cleaned_2.fastq")),
-    "out1={}".format(os.path.join(output_directory, "cleaned_1.fastq.gz")),
-    "out2={}".format(os.path.join(output_directory, "cleaned_2.fastq.gz")),
-    "overwrite=t",
-    ")",
-    "&&",
-    "rm {}".format(os.path.join(output_directory, "TMP__cleaned_*.fastq")),
-    "&&",
-    # Repair contaminated
-   "(",
-    os.environ["repair.sh"],
-    "in1={}".format(os.path.join(output_directory, "TMP__contaminated_1.fastq")),
-    "in2={}".format(os.path.join(output_directory, "TMP__contaminated_2.fastq")),
-    "out1={}".format(os.path.join(output_directory, "contaminated_1.fastq.gz")),
-    "out2={}".format(os.path.join(output_directory, "contaminated_2.fastq.gz")),
-    "overwrite=t",
-    ")",
-    "&&",
-    "rm {}".format(os.path.join(output_directory, "TMP__contaminated_*.fastq")),
-    ]
-
-    cmd += [
     # Seqkit
     "&&",
     "(",
@@ -124,7 +191,6 @@ def get_bowtie2_cmd(input_filepaths, output_filepaths, output_directory, directo
     "-T",
     "-j {}".format(opts.n_jobs),
     os.path.join(output_directory, "*.fastq.gz"),
-
     ">",
     os.path.join(output_directory, "seqkit_stats.tsv"),
     ")",
@@ -136,7 +202,7 @@ def get_bowtie2_cmd(input_filepaths, output_filepaths, output_directory, directo
         "&&",
         "rm -rf {}".format(os.path.join( directories[("intermediate",  "1__fastp")], "*.fastq.gz")),
         ]
-    # Remove decontaminated reads
+    # Remove contaminated reads
     if not opts.retain_contaminated_reads:
         cmd += [
         "&&",
@@ -229,7 +295,8 @@ def add_executables_to_environment(opts):
     required_executables = {
                 "repair.sh",
                 "bbduk.sh",
-                "bowtie2",
+                "strobealign",
+                "samtools",
                 "fastp",
                 "seqkit",
     } | accessory_scripts
@@ -291,7 +358,7 @@ def create_pipeline(opts, directories, f_cmds):
     input_filepaths = [opts.forward_reads, opts.reverse_reads]
 
     if all([
-        bool(opts.contamination_index),
+        bool(opts.contamination_reference),
         not bool(opts.retain_trimmed_reads),
     ]):
         output_filenames = ["seqkit_stats.tsv"]
@@ -321,11 +388,11 @@ def create_pipeline(opts, directories, f_cmds):
     )
 
     # =========
-    # Bowtie2
+    # Strobealign
     # =========
-    if opts.contamination_index:
+    if opts.contamination_reference:
         step += 1
-        program = "bowtie2"
+        program = "strobealign"
         program_label = "{}__{}".format(step, program)
         # Add to directories
         output_directory = directories[("intermediate",  program_label)] = create_directory(os.path.join(directories["intermediate"], program_label))
@@ -350,7 +417,7 @@ def create_pipeline(opts, directories, f_cmds):
             "directories":directories,
         }
         # Command
-        cmd = get_bowtie2_cmd(**params)
+        cmd = get_strobealign_cmd(**params)
         pipeline.add_step(
                     id=program,
                     description = description,
@@ -375,11 +442,11 @@ def create_pipeline(opts, directories, f_cmds):
         # Info
         description = "Decontaminate reads based on k-mer database"
 
-        if opts.contamination_index:
+        if opts.contamination_reference:
             # i/o
             input_filepaths = [
-                os.path.join(os.path.join(directories["intermediate"], "2__bowtie2"), "cleaned_1.fastq.gz"),
-                os.path.join(os.path.join(directories["intermediate"], "2__bowtie2"), "cleaned_2.fastq.gz"),
+                os.path.join(os.path.join(directories["intermediate"], "2__strobealign"), "cleaned_1.fastq.gz"),
+                os.path.join(os.path.join(directories["intermediate"], "2__strobealign"), "cleaned_2.fastq.gz"),
             ]
         else:
             # i/o
@@ -426,6 +493,8 @@ def create_pipeline(opts, directories, f_cmds):
     # i/o
     input_filepaths = [
         os.path.join(directories["intermediate"], "*", "*.fastq.gz"),
+        os.path.join(directories["intermediate"], "1__fastp", "fastp.html"),
+        os.path.join(directories["intermediate"], "1__fastp", "fastp.json"),
     ]
 
     output_filenames = map(lambda fp: fp.split("/")[-1], input_filepaths)
@@ -464,6 +533,8 @@ def configure_parameters(opts, directories):
     assert_acceptable_arguments(opts.retain_trimmed_reads, {0, 1})
     assert_acceptable_arguments(opts.retain_contaminated_reads, {0, 1})
 
+    opts.contamination_reference = opts.contamination_fasta
+
     # Set environment variables
     add_executables_to_environment(opts=opts)
 
@@ -474,7 +545,7 @@ def main(args=None):
     # Path info
     description = """
     Running: {} v{} via Python v{} | {}""".format(__program__, __version__, sys.version.split(" ")[0], sys.executable)
-    usage = "{} -1 <reads_1.fq> -2 <reads_2.fq> -n <name> -o <output_directory> |Optional| -x <reference_index> -k <kmer_database>".format(__program__)
+    usage = "{} -1 <reads_1.fq> -2 <reads_2.fq> -n <n> -o <output_directory> |Optional| -x <contamination_reference.fasta> [-i/--use_index] -k <kmer_database>".format(__program__)
     epilog = "Copyright 2022 Josh L. Espinoza (jespinoz@jcvi.org)"
 
     # Parser
@@ -501,12 +572,13 @@ def main(args=None):
     parser_fastp.add_argument("--low_complexity_filter", default=1, type=int, help="Fastp | Enable low complexity filter. 0=No, 1=Yes [Default: 1]")
     parser_fastp.add_argument("--fastp_options", type=str, default="", help="Fastp | More options (e.g. --arg 1 ) [Default: '']")
 
-    # Bowtie
-    parser_bowtie2 = parser.add_argument_group('Bowtie2 arguments')
-    parser_bowtie2.add_argument("-x", "--contamination_index", type=str, help="Bowtie2 | path/to/contamination_index\n(e.g., Human T2T assembly from https://genome-idx.s3.amazonaws.com/bt/chm13v2.0.zip)")
-    parser_bowtie2.add_argument("--retain_trimmed_reads", default=0, type=int, help = "Retain fastp trimmed fastq after decontamination. 0=No, 1=yes [Default: 0]")
-    parser_bowtie2.add_argument("--retain_contaminated_reads", default=0, type=int, help = "Retain contaminated fastq after decontamination. 0=No, 1=yes [Default: 0]")
-    parser_bowtie2.add_argument("--bowtie2_options", type=str, default="", help="Bowtie2 | More options (e.g. --arg 1 ) [Default: '']\nhttp://bowtie-bio.sourceforge.net/bowtie2/manual.shtml")
+    # Strobealign
+    parser_strobealign = parser.add_argument_group('Strobealign arguments')
+    parser_strobealign.add_argument("-x", "--contamination_fasta", type=str, help="Strobealign | path/to/contamination_reference.fasta[.gz]\n(e.g., Human T2T assembly from https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/latest_assembly_versions/GCF_009914755.1_T2T-CHM13v2.0/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna.gz)")
+    parser_strobealign.add_argument("-i", "--use_index", action="store_true", default=False, help="Strobealign | Use pre-built .sti index (must exist next to the FASTA). Maps to strobealign --use-index.")
+    parser_strobealign.add_argument("--retain_trimmed_reads", default=0, type=int, help = "Retain fastp trimmed fastq after decontamination. 0=No, 1=yes [Default: 0]")
+    parser_strobealign.add_argument("--retain_contaminated_reads", default=0, type=int, help = "Retain contaminated fastq after decontamination. 0=No, 1=yes [Default: 0]")
+    parser_strobealign.add_argument("--strobealign_options", type=str, default="", help="Strobealign | More options (e.g. --arg 1 ) [Default: '']\nhttps://github.com/ksahlin/strobealign")
 
     # BBDuk
     parser_bbduk = parser.add_argument_group('BBDuk arguments')

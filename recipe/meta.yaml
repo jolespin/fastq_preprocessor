@@ -1,5 +1,5 @@
 {% set name = "fastq_preprocessor" %}
-{% set version = "2026.4.2" %}
+{% set version = "2026.4.13" %}
 
 package:
   name: {{ name|lower }}
@@ -26,10 +26,10 @@ requirements:
     - seqkit
     - bbmap
     - fastp
-    - bowtie2
     - minimap2
     - pigz
     - fastplong
+    - strobealign
 
 about:
   home: https://github.com/jolespin/fastq_preprocessor

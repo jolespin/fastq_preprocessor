@@ -9,7 +9,7 @@
 ```
 #### Description:
 
-A fastq preprocessor for short and long read sequencing. For short reads, it is a wrapper around `fastp` for a standardized directory structure and can optionally feed the trimmed reads into `bowtie2` if an index is provided to decontaminate sequences similar to `kneaddata` (useful in metagenomics to remove host reads). For long reads, it uses `fastplong` instead of `fastp` and `minimap2` instead of `bowtie2`.
+A fastq preprocessor for short and long read sequencing. For short reads, it is a wrapper around `fastp` for a standardized directory structure and can optionally feed the trimmed reads into `strobealign` if a reference FASTA or pre-built index is provided to decontaminate sequences similar to `kneaddata` (useful in metagenomics to remove host reads). For long reads, it uses `fastplong` instead of `fastp` and `minimap2` instead of `strobealign`.
 
 Also includes functionality to filter based on k-mer profiles and is useful for quantifying the amount of ribosomal reads.  At each stage, `seqkit stats` is run so there are read stats that can be used post hoc.  
 
@@ -25,7 +25,7 @@ Also includes functionality to filter based on k-mer profiles and is useful for 
 
 `__license__ = "Apache 2.0"`
 
-`__version__ = "2026.3.24"`
+`__version__ = "2026.4.13"`
 
 #### Dependencies: 
 
@@ -33,10 +33,11 @@ Also includes functionality to filter based on k-mer profiles and is useful for 
 * bbmap
 * fastp
 * seqkit
-* bowtie2
 * minimap2
 * samtools
 * fastplong
+* strobealign
+* bowtie2 (deprecated, replaced by strobealign)
 
 ##### Python packages:
 * pandas
@@ -77,9 +78,7 @@ optional arguments:
 
 ```
 fastq_preprocessor short -h
-usage: fastq_preprocessor -1 <reads_1.fq> -2 <reads_2.fq> -n <name> -o <output_directory> |Optional| -x <reference_index> -k <kmer_database>
-
-    Running: fastq_preprocessor v2026.3.24 via Python v3.9.9 | /Users/jespinoz/anaconda3/bin/python
+usage: fastq_preprocessor -1 <reads_1.fq> -2 <reads_2.fq> -n <name> -o <output_directory> |Optional| -x <contamination_reference.fasta> [-i/--use_index] -k <kmer_database>
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -114,17 +113,18 @@ Fastp arguments:
   --fastp_options FASTP_OPTIONS
                         Fastp | More options (e.g. --arg 1 ) [Default: '']
 
-Bowtie2 arguments:
-  -x CONTAMINATION_INDEX, --contamination_index CONTAMINATION_INDEX
-                        Bowtie2 | path/to/contamination_index
-                        (e.g., Human T2T assembly from https://genome-idx.s3.amazonaws.com/bt/chm13v2.0.zip)
+Strobealign arguments:
+  -x CONTAMINATION_FASTA, --contamination_fasta CONTAMINATION_FASTA
+                        Strobealign | path/to/contamination_reference.fasta[.gz]
+                        (e.g., Human T2T assembly from https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/latest_assembly_versions/GCF_009914755.1_T2T-CHM13v2.0/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna.gz)
+  -i, --use_index       Strobealign | Use pre-built .sti index (must exist next to the FASTA). Maps to strobealign --use-index.
   --retain_trimmed_reads RETAIN_TRIMMED_READS
                         Retain fastp trimmed fastq after decontamination. 0=No, 1=yes [Default: 0]
   --retain_contaminated_reads RETAIN_CONTAMINATED_READS
                         Retain contaminated fastq after decontamination. 0=No, 1=yes [Default: 0]
-  --bowtie2_options BOWTIE2_OPTIONS
-                        Bowtie2 | More options (e.g. --arg 1 ) [Default: '']
-                        http://bowtie-bio.sourceforge.net/bowtie2/manual.shtml
+  --strobealign_options STROBEALIGN_OPTIONS
+                        Strobealign | More options (e.g. --arg 1 ) [Default: '']
+                        https://github.com/ksahlin/strobealign
 
 BBDuk arguments:
   -k KMER_DATABASE, --kmer_database KMER_DATABASE
@@ -139,14 +139,12 @@ BBDuk arguments:
   --bbduk_options BBDUK_OPTIONS
                         BBDuk | More options (e.g., --arg 1) [Default: '']
 
-Copyright 2022 Josh L. Espinoza (jespinoz@jcvi.org)
 ```
 
 **Oxford Nanopore and PacBio reads (`long`)**
 
 ```
 fastq_preprocessor long -h
-usage: fastq_preprocessor -i <reads.fq[.gz]> -n <name> -o <output_directory> |Optional| -x <reference_index> -k <kmer_database>
 
     Running: fastq_preprocessor v2026.3.24 via Python v3.9.9 | /Users/jespinoz/anaconda3/bin/python
 
@@ -207,8 +205,68 @@ BBDuk arguments:
                         Retain reads that do not map to k-mer database. 0=No, 1=yes [Default: 0]
   --bbduk_options BBDUK_OPTIONS
                         BBDuk | More options (e.g., --arg 1) [Default: '']
+```
 
-Copyright 2022 Josh L. Espinoza (jespinoz@jcvi.org)
+**Strobealign wrapper (`strobealign_wrapper`)**
 
+Wraps `strobealign` to split aligned output into mapped and unmapped paired-end FASTQ files and/or coordinate-sorted BAM files. All unrecognized arguments are forwarded directly to `strobealign`.
+
+```
+strobealign_wrapper -h
+usage: strobealign_wrapper [strobealign_options] reference reads1 reads2 --mapped_fastq PATH --unmapped_fastq PATH --bam PATH
+
+Required I/O arguments:
+  reference             Reference FASTA for strobealign
+  reads1                Forward reads FASTQ
+  reads2                Reverse reads FASTQ
+  --mapped_fastq        Output path for mapped reads.
+                        Use % for paired: mapped_%.fastq.gz -> mapped_1.fastq.gz, mapped_2.fastq.gz
+                        Without %: interleaved output. % is replaced with 1 or 2.
+  --unmapped_fastq      Output path for unmapped reads.
+                        Use % for paired: unmapped_%.fastq.gz -> unmapped_1.fastq.gz, unmapped_2.fastq.gz
+                        Without %: interleaved output. % is replaced with 1 or 2.
+  --bam                 Output path for coordinate-sorted BAM file
+  --coverage            Run samtools coverage on BAM and write {bam}.coverage.tsv (requires --bam)
+  --depth               Run samtools depth -a on BAM and write {bam}.depth.tsv (requires --bam)
+
+Utility arguments:
+  -t, --threads         Threads for strobealign [Default: 1]
+  --samtools_threads    Threads for samtools fastq/sort [Default: 1]
+  --no_repair           Disable repair.sh post-processing
+  -c, --compression_level
+                        Compression level [0..9] for samtools fastq bgzf output [Default: 6]
+  -T, --temporary_directory
+                        Temporary directory for samtools collate/sort and named pipes [Default: /tmp/strobealign_wrapper]
+  -v, --version         show program's version number and exit
+```
+
+Example — split into paired files:
+```
+strobealign_wrapper -t 8 \
+  reference.fasta.gz \
+  reads_1.fastq.gz \
+  reads_2.fastq.gz \
+  --mapped_fastq output/mapped_%.fastq.gz \
+  --unmapped_fastq output/unmapped_%.fastq.gz
+```
+
+Example — split into interleaved files:
+```
+strobealign_wrapper -t 8 \
+  reference.fasta.gz \
+  reads_1.fastq.gz \
+  reads_2.fastq.gz \
+  --mapped_fastq output/mapped.fastq.gz \
+  --unmapped_fastq output/unmapped.fastq.gz
+```
+
+Example — BAM with coverage and depth stats:
+```
+strobealign_wrapper -t 8 \
+  reference.fasta.gz \
+  reads_1.fastq.gz \
+  reads_2.fastq.gz \
+  --bam output/aligned.bam \
+  --coverage --depth
 ```
 

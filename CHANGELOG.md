@@ -1,4 +1,14 @@
 **Changes:**
+* [2026.4.13] - Symlink `fastp` `.html`/`.json` and `fastplong` `.html`/`.json` report files to the output directory [issue/#30](https://github.com/jolespin/fastq_preprocessor/issues/30)
+* [2026.4.13] - Added `--coverage` and `--depth` flags to `strobealign_wrapper` for `samtools coverage` and `samtools depth` output from BAM files [issue/#22](https://github.com/jolespin/fastq_preprocessor/issues/22)
+* [2026.4.10] - Renamed `strobealign_split_reads` to `strobealign_wrapper` to better reflect broader purpose (BAM output, future coverage support) [issue/#25](https://github.com/jolespin/fastq_preprocessor/issues/25)
+* [2026.4.10] - Fixed `strobealign` index support: replaced `-i/--contamination_index` with `-i/--use_index` boolean flag that maps to strobealign's native `--use-index` [issue/#24](https://github.com/jolespin/fastq_preprocessor/issues/24)
+* [2026.4.10] - Added `-c/--compression_level` to `strobealign_split_reads` (default 6) applied to both `samtools fastq -c` and `repair.sh zl=` for consistent gzip compression
+* [2026.4.10] - Added `--bam` flag to `strobealign_split_reads` for coordinate-sorted BAM output
+* [2026.4.10] - Changed `--temporary_prefix` to `-T/--temporary_directory` in `strobealign_split_reads` with task-specific prefixes derived internally
+* [2026.4.10] - Generalized `strobealign_split_reads` consumer architecture to support 1–3 concurrent outputs in any combination
+* [2026.4.9] - Replaced `bowtie2` with `strobealign` in `fastq_preprocessor_short` [issue/#3](https://github.com/jolespin/fastq_preprocessor/issues/3)
+* [2026.4.9] - Added `strobealign_split_reads` wrapper [issue/#13](https://github.com/jolespin/fastq_preprocessor/issues/13)
 * [2026.4.2] - Simplified `__version__` imports
 * [2026.4.2] - Changed `loguru` logging to write to `stdout` by default with errors also reported to `stderr`
 * [2026.3.24] - Changed default output path from `veba_output/preprocess/` back to `preprocessed/`
