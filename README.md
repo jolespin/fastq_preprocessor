@@ -25,7 +25,7 @@ Also includes functionality to filter based on k-mer profiles and is useful for 
 
 `__license__ = "Apache 2.0"`
 
-`__version__ = "2026.4.9"`
+`__version__ = "2026.4.13"`
 
 #### Dependencies: 
 
