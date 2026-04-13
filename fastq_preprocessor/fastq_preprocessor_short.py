@@ -493,6 +493,8 @@ def create_pipeline(opts, directories, f_cmds):
     # i/o
     input_filepaths = [
         os.path.join(directories["intermediate"], "*", "*.fastq.gz"),
+        os.path.join(directories["intermediate"], "1__fastp", "fastp.html"),
+        os.path.join(directories["intermediate"], "1__fastp", "fastp.json"),
     ]
 
     output_filenames = map(lambda fp: fp.split("/")[-1], input_filepaths)
