@@ -13,31 +13,20 @@ A fastq preprocessor for short and long read sequencing. For short reads, it is 
 
 Also includes functionality to filter based on k-mer profiles and is useful for quantifying the amount of ribosomal reads.  At each stage, `seqkit stats` is run so there are read stats that can be used post hoc.  
 
-#### About:
+#### Citation:
+Espinoza JL, Dupont CL. VEBA: a modular end-to-end suite for in silico recovery, clustering, and analysis of prokaryotic, microeukaryotic, and viral genomes from metagenomes. BMC Bioinformatics. 2022 Oct 12;23(1):419. doi: 10.1186/s12859-022-04973-8. PMID: 36224545."
 
-`__developer__ = "Josh L. Espinoza"`
-
-`__cite__ = "Espinoza JL, Dupont CL. VEBA: a modular end-to-end suite for in silico recovery, clustering, and analysis of prokaryotic, microeukaryotic, and viral genomes from metagenomes. BMC Bioinformatics. 2022 Oct 12;23(1):419. doi: 10.1186/s12859-022-04973-8. PMID: 36224545."`
-
-`__contact__ = "jespinoz@jcvi.org, jol.espinoz@gmail.com"`
-
-`__developmental__ = True`
-
-`__license__ = "Apache 2.0"`
-
-`__version__ = "2026.4.13"`
 
 #### Dependencies: 
 
 ##### Bioinformatics software:
+* seqkit
 * bbmap
 * fastp
-* seqkit
-* minimap2
-* samtools
 * fastplong
 * strobealign
-* bowtie2 (deprecated, replaced by strobealign)
+* minimap2
+* samtools
 
 ##### Python packages:
 * pandas
