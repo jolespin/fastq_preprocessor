@@ -225,11 +225,16 @@ Required I/O arguments:
   --unmapped_fastq      Output path for unmapped reads.
                         Use % for paired: unmapped_%.fastq.gz -> unmapped_1.fastq.gz, unmapped_2.fastq.gz
                         Without %: interleaved output. % is replaced with 1 or 2.
+  --bam                 Output path for coordinate-sorted BAM file
+  --coverage            Run samtools coverage on BAM and write {bam}.coverage.tsv (requires --bam)
+  --depth               Run samtools depth -a on BAM and write {bam}.depth.tsv (requires --bam)
 
 Utility arguments:
   -t, --threads         Threads for strobealign [Default: 1]
-  --samtools_threads    Threads for samtools fastq gzip compression [Default: 1]
+  --samtools_threads    Threads for samtools fastq/sort [Default: 1]
   --no_repair           Disable repair.sh post-processing
+  -c, --compression_level
+                        Compression level [0..9] for samtools fastq bgzf output [Default: 6]
   -T, --temporary_directory
                         Temporary directory for samtools collate/sort and named pipes [Default: /tmp/strobealign_wrapper]
   -v, --version         show program's version number and exit
@@ -253,5 +258,15 @@ strobealign_wrapper -t 8 \
   reads_2.fastq.gz \
   --mapped_fastq output/mapped.fastq.gz \
   --unmapped_fastq output/unmapped.fastq.gz
+```
+
+Example — BAM with coverage and depth stats:
+```
+strobealign_wrapper -t 8 \
+  reference.fasta.gz \
+  reads_1.fastq.gz \
+  reads_2.fastq.gz \
+  --bam output/aligned.bam \
+  --coverage --depth
 ```
 

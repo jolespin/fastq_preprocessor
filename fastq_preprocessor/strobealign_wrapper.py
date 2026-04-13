@@ -123,7 +123,7 @@ def build_consumer_cmd(samtools_flag, samtools_threads, fifo_or_stdin, output_in
     return cmd
 
 
-def build_cmd(opts, strobealign_extra_args, compression_level=6):
+def build_cmd(opts, strobealign_extra_args, compression_level=6, coverage=False, depth=False):
     parts = []
 
     # Resolve output paths
@@ -224,6 +224,15 @@ def build_cmd(opts, strobealign_extra_args, compression_level=6):
         parts.append("wait")
         parts.append("rm -f {}".format(" ".join(fifos)))
 
+    if (coverage or depth) and has_bam:
+        parts.append("")
+        post_cmds = ["samtools index {}".format(bam_path)]
+        if coverage:
+            post_cmds.append("samtools coverage {bam} > {bam}.coverage.tsv".format(bam=bam_path))
+        if depth:
+            post_cmds.append("samtools depth -a -H {bam} > {bam}.depth.tsv".format(bam=bam_path))
+        parts.append(" \\\n&& ".join(post_cmds))
+
     return "\n".join(parts)
 
 
@@ -276,6 +285,10 @@ def main(args=None):
                            help="Output path for unmapped reads.\nUse %% for paired: unmapped_%%.fastq.gz -> unmapped_1.fastq.gz, unmapped_2.fastq.gz\nWithout %%: interleaved output")
     parser_io.add_argument("--bam", type=str, default=None,
                            help="Output path for coordinate-sorted BAM file")
+    parser_io.add_argument("--coverage", action="store_true", default=False,
+                           help="Run samtools coverage on BAM and write {bam}.coverage.tsv (requires --bam)")
+    parser_io.add_argument("--depth", action="store_true", default=False,
+                           help="Run samtools depth -a on BAM and write {bam}.depth.tsv (requires --bam)")
 
     parser_utility = parser.add_argument_group('Utility arguments')
     parser_utility.add_argument("-t", "--threads", type=int, default=1, help="Threads for strobealign [Default: 1]")
@@ -292,6 +305,9 @@ def main(args=None):
     # Validate
     if opts.mapped_fastq is None and opts.unmapped_fastq is None and opts.bam is None:
         parser.error("At least one of --mapped_fastq, --unmapped_fastq, or --bam must be provided")
+
+    if (opts.coverage or opts.depth) and opts.bam is None:
+        parser.error("--coverage and --depth require --bam to be provided")
 
     for label, path in [("--mapped_fastq", opts.mapped_fastq), ("--unmapped_fastq", opts.unmapped_fastq)]:
         if path is not None and path.count("%") > 1:
@@ -330,6 +346,8 @@ def main(args=None):
     logger.info("Mapped FASTQ: {}", opts.mapped_fastq)
     logger.info("Unmapped FASTQ: {}", opts.unmapped_fastq)
     logger.info("BAM: {}", opts.bam)
+    logger.info("Coverage: {}", opts.coverage)
+    logger.info("Depth: {}", opts.depth)
     logger.info("Threads: {}", opts.threads)
     logger.info("Samtools threads: {}", opts.samtools_threads)
     logger.info("Repair: {}", not opts.no_repair)
@@ -340,7 +358,8 @@ def main(args=None):
     logger.info("=" * 60)
 
     # Build and execute
-    cmd_str = build_cmd(opts, strobealign_extra_args, compression_level=opts.compression_level)
+    cmd_str = build_cmd(opts, strobealign_extra_args, compression_level=opts.compression_level,
+                        coverage=opts.coverage, depth=opts.depth)
     logger.info("Command:\n{}", cmd_str)
     run(["bash", "-c", cmd_str], check=True)
     logger.success("Completed successfully")
