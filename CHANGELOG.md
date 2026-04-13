@@ -1,4 +1,5 @@
 **Changes:**
+* [2026.4.13] - Symlink `fastp` `.html`/`.json` and `fastplong` `.html`/`.json` report files to the output directory [issue/#30](https://github.com/jolespin/fastq_preprocessor/issues/30)
 * [2026.4.13] - Added `--coverage` and `--depth` flags to `strobealign_wrapper` for `samtools coverage` and `samtools depth` output from BAM files [issue/#22](https://github.com/jolespin/fastq_preprocessor/issues/22)
 * [2026.4.10] - Renamed `strobealign_split_reads` to `strobealign_wrapper` to better reflect broader purpose (BAM output, future coverage support) [issue/#25](https://github.com/jolespin/fastq_preprocessor/issues/25)
 * [2026.4.10] - Fixed `strobealign` index support: replaced `-i/--contamination_index` with `-i/--use_index` boolean flag that maps to strobealign's native `--use-index` [issue/#24](https://github.com/jolespin/fastq_preprocessor/issues/24)
