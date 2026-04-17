@@ -78,6 +78,7 @@ def get_minimap2_cmd(input_filepaths, output_filepaths, output_directory, direct
     "-",
     "|",
     os.environ["pigz"],
+    "-{}".format(opts.compression_level),
     "-p {}".format(opts.n_jobs),
     ">",
     os.path.join(output_directory, "contaminated.fastq.gz"),
@@ -95,6 +96,7 @@ def get_minimap2_cmd(input_filepaths, output_filepaths, output_directory, direct
     "-",
     "|",
     os.environ["pigz"],
+    "-{}".format(opts.compression_level),
     "-p {}".format(opts.n_jobs),
     ">",
     os.path.join(output_directory, "cleaned.fastq.gz"),
@@ -472,6 +474,7 @@ def main(args=None):
     parser_utility = parser.add_argument_group('Utility arguments')
     parser_utility.add_argument("--path_config", type=str,  default="CONDA_PREFIX", help="path/to/config.tsv. Must have at least 2 columns [name, executable] [Default: CONDA_PREFIX]")  #site-packges in future
     parser_utility.add_argument("-p", "--n_jobs", type=int, default=1, help = "Number of threads [Default: 1]")
+    parser_utility.add_argument("-c", "--compression_level", type=int, default=6, help="Compression level [1..9] for gzipped FASTQ output [Default: 6]")
     parser_utility.add_argument("--random_state", type=int, default=0, help = "Random state [Default: 0]")
     parser_utility.add_argument("--restart_from_checkpoint", type=int, help = "Restart from a particular checkpoint")
     parser_utility.add_argument("-v", "--version", action='version', version="{} v{}".format(__program__, __version__))

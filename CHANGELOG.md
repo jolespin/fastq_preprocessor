@@ -1,4 +1,7 @@
 **Changes:**
+* [2026.4.17] - Added `-c/--compression_level` to `fastq_preprocessor_short` (applied to `repair.sh zl=`) and `fastq_preprocessor_long` (applied to `pigz`) for configurable gzip compression of output FASTQ files (default: 6)
+* [2026.4.17] - Added random run ID (8-character hex UUID) to `strobealign_wrapper` temporary file names (FIFOs, `samtools collate`/`sort` prefixes) to prevent collisions during simultaneous runs; temporary files are removed on both success and failure via `atexit`
+* [2026.4.17] - Changed `samtools depth -a` to `samtools depth -aa` in `strobealign_wrapper` to include all positions even for contigs with no mapped reads
 * [2026.4.13] - Symlink `fastp` `.html`/`.json` and `fastplong` `.html`/`.json` report files to the output directory [issue/#30](https://github.com/jolespin/fastq_preprocessor/issues/30)
 * [2026.4.13] - Added `--coverage` and `--depth` flags to `strobealign_wrapper` for `samtools coverage` and `samtools depth` output from BAM files [issue/#22](https://github.com/jolespin/fastq_preprocessor/issues/22)
 * [2026.4.10] - Renamed `strobealign_split_reads` to `strobealign_wrapper` to better reflect broader purpose (BAM output, future coverage support) [issue/#25](https://github.com/jolespin/fastq_preprocessor/issues/25)

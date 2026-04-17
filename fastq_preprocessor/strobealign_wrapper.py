@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import print_function, division
-import sys, os, argparse, atexit
+import sys, os, argparse, atexit, uuid
 from subprocess import (
     run,
     PIPE,
@@ -22,6 +22,7 @@ from fastq_preprocessor import __version__
 # FIFO cleanup
 # =============
 fifo_paths = []
+run_id = uuid.uuid4().hex[:8]
 
 def cleanup_fifos():
     for p in fifo_paths:
@@ -156,7 +157,7 @@ def build_cmd(opts, strobealign_extra_args, compression_level=6, coverage=False,
             r2=opts.reads2,
         ),
         "samtools view -h -",
-        "samtools collate -u -O - {prefix}".format(prefix=os.path.join(opts.temporary_directory, "samtools_collate")),
+        "samtools collate -u -O - {prefix}".format(prefix=os.path.join(opts.temporary_directory, "samtools_collate_{}".format(run_id))),
     ]
     producer = " | ".join(producer_tokens)
 
@@ -177,7 +178,7 @@ def build_cmd(opts, strobealign_extra_args, compression_level=6, coverage=False,
     if has_bam:
         consumers.append(("bam", "samtools sort -@ {threads} -T {tmp} -o {out} -".format(
             threads=opts.samtools_threads,
-            tmp=os.path.join(opts.temporary_directory, "samtools_sort"),
+            tmp=os.path.join(opts.temporary_directory, "samtools_sort_{}".format(run_id)),
             out=bam_path,
         )))
 
@@ -197,7 +198,7 @@ def build_cmd(opts, strobealign_extra_args, compression_level=6, coverage=False,
         # Last consumer reads from stdout via >
         fifos = []
         for i, (label, consumer_cmd) in enumerate(consumers[:-1]):
-            fifo = os.path.join(opts.temporary_directory, "{}_fifo".format(label))
+            fifo = os.path.join(opts.temporary_directory, "{}_{}_fifo".format(label, run_id))
             fifos.append(fifo)
             fifo_paths.append(fifo)
             consumer_cmd = _set_consumer_input(consumer_cmd, label, fifo)
@@ -206,7 +207,7 @@ def build_cmd(opts, strobealign_extra_args, compression_level=6, coverage=False,
 
         # Last consumer reads from the final fifo via >
         last_label, last_consumer_cmd = consumers[-1]
-        last_fifo = os.path.join(opts.temporary_directory, "{}_fifo".format(last_label))
+        last_fifo = os.path.join(opts.temporary_directory, "{}_{}_fifo".format(last_label, run_id))
         fifos.append(last_fifo)
         fifo_paths.append(last_fifo)
         last_consumer_cmd = _set_consumer_input(last_consumer_cmd, last_label, last_fifo)
@@ -230,7 +231,7 @@ def build_cmd(opts, strobealign_extra_args, compression_level=6, coverage=False,
         if coverage:
             post_cmds.append("samtools coverage {bam} > {bam}.coverage.tsv".format(bam=bam_path))
         if depth:
-            post_cmds.append("samtools depth -a -H {bam} > {bam}.depth.tsv".format(bam=bam_path))
+            post_cmds.append("samtools depth -aa -H {bam} > {bam}.depth.tsv".format(bam=bam_path))
         parts.append(" \\\n&& ".join(post_cmds))
 
     return "\n".join(parts)
