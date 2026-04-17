@@ -1,4 +1,5 @@
 **Changes:**
+* [2026.4.17] - Added `coverage_breadth` CLI tool that computes genome-level coverage breadth (ratio of bases covered at ≥ `--minimum_depth`) from `samtools depth` (with or without `-aa`) or `samtools coverage` output; outputs a single `percentage_of_bases_covered\t<value>` row (0–100 scale) to stdout or a file
 * [2026.4.17] - Added `-c/--compression_level` to `fastq_preprocessor_short` (applied to `repair.sh zl=`) and `fastq_preprocessor_long` (applied to `pigz`) for configurable gzip compression of output FASTQ files (default: 6)
 * [2026.4.17] - Added random run ID (8-character hex UUID) to `strobealign_wrapper` temporary file names (FIFOs, `samtools collate`/`sort` prefixes) to prevent collisions during simultaneous runs; temporary files are removed on both success and failure via `atexit`
 * [2026.4.17] - Changed `samtools depth -a` to `samtools depth -aa` in `strobealign_wrapper` to include all positions even for contigs with no mapped reads

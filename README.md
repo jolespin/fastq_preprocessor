@@ -261,3 +261,53 @@ strobealign_wrapper -t 8 \
   --coverage --depth
 ```
 
+**Coverage breadth (`coverage_breadth`)**
+
+Computes genome-level coverage breadth (percentage of bases covered at ≥ `--minimum_depth` (0–100 scale)) from `samtools depth` or `samtools coverage` output. Outputs a single tab-separated row: `percentage_of_bases_covered\t<value>`. Either `--depth` or `--coverage` must be provided (not both). If `--depth` was generated without `-aa`, provide `--fasta` for reference lengths. `--minimum_depth > 1` is only supported with `--depth`.
+
+```
+coverage_breadth -h
+usage: coverage_breadth (--depth PATH | --coverage PATH) [--fasta PATH] [-o PATH] [--minimum_depth INT]
+
+Required I/O arguments:
+  --depth               Path to samtools depth TSV.
+                        If generated with -aa, all positions are present (--fasta not needed).
+                        If generated without -aa, provide --fasta for reference lengths.
+  --fasta               Reference FASTA (required when samtools depth was run without -aa)
+  --coverage            Path to samtools coverage TSV
+  -o, --output          Output path [Default: stdout]
+
+Parameter arguments:
+  --minimum_depth       Minimum depth to count a position as covered [Default: 1]
+
+Utility arguments:
+  -v, --version         show program's version number and exit
+```
+
+Example — from `samtools depth -aa` output:
+```
+coverage_breadth \
+  --depth output/aligned.bam.depth.tsv
+```
+
+Example — from `samtools depth` (without `-aa`), using FASTA for reference lengths:
+```
+coverage_breadth \
+  --depth output/aligned.bam.depth.tsv \
+  --fasta reference.fasta.gz
+```
+
+Example — from `samtools coverage` output:
+```
+coverage_breadth \
+  --coverage output/aligned.bam.coverage.tsv
+```
+
+Example — custom minimum depth, write to file:
+```
+coverage_breadth \
+  --depth output/aligned.bam.depth.tsv \
+  --minimum_depth 5 \
+  -o output/coverage_breadth.tsv
+```
+

@@ -29,6 +29,7 @@ setup(name='fastq_preprocessor',
             'fastq_preprocessor_short=fastq_preprocessor.fastq_preprocessor_short:main',
             'fastq_preprocessor_long=fastq_preprocessor.fastq_preprocessor_long:main',
             'strobealign_wrapper=fastq_preprocessor.strobealign_wrapper:main',
+            'coverage_breadth=fastq_preprocessor.coverage_breadth:main',
         ],
     },
 
