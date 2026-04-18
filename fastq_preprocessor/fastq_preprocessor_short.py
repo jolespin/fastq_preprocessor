@@ -49,6 +49,7 @@ def get_fastp_cmd(input_filepaths, output_filepaths, output_directory, directori
     "out2={}".format(os.path.join(output_directory, "trimmed_2.fastq.gz")),
     # "outs={}".format(os.path.join(output_directory, "trimmed_singletons.fastq.gz")),
     "overwrite=t",
+    "zl={}".format(opts.compression_level),
     ")",
     # Seqkit
     "&&",
@@ -172,7 +173,7 @@ def get_strobealign_cmd(input_filepaths, output_filepaths, output_directory, dir
         strobealign_extra_args += opts.strobealign_options.split()
 
     # Generate bash script via strobealign wrapper
-    bash_script = strobealign_build_cmd(strobealign_opts, strobealign_extra_args, compression_level=6)
+    bash_script = strobealign_build_cmd(strobealign_opts, strobealign_extra_args, compression_level=opts.compression_level)
 
     # Ensure conda bin is in PATH for bare tool names used by build_cmd
     path_prefix = "export PATH={}:$PATH".format(os.path.join(os.environ["CONDA_PREFIX"], "bin"))
@@ -561,6 +562,7 @@ def main(args=None):
     parser_utility = parser.add_argument_group('Utility arguments')
     parser_utility.add_argument("--path_config", type=str,  default="CONDA_PREFIX", help="path/to/config.tsv. Must have at least 2 columns [name, executable] [Default: CONDA_PREFIX]")  #site-packges in future
     parser_utility.add_argument("-p", "--n_jobs", type=int, default=1, help = "Number of threads [Default: 1]")
+    parser_utility.add_argument("-c", "--compression_level", type=int, default=6, help="Compression level [1..9] for gzipped FASTQ output [Default: 6]")
     parser_utility.add_argument("--random_state", type=int, default=0, help = "Random state [Default: 0]")
     parser_utility.add_argument("--restart_from_checkpoint", type=int, help = "Restart from a particular checkpoint")
     parser_utility.add_argument("-v", "--version", action='version', version="{} v{}".format(__program__, __version__))

@@ -1,6 +1,7 @@
 TASK.md
 CLAUDE.md
 .claude/
+tmp/
 
 # Ignore Python distribution artifacts
 *.egg-info/
