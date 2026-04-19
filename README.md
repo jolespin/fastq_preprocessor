@@ -9,7 +9,7 @@ Also includes functionality to filter based on k-mer profiles and is useful for 
 #### Citations:
 Espinoza JL, Phillips A, Prentice MB, Tan GS, Kamath PL, Lloyd KG, Dupont CL. Unveiling the microbial realm with VEBA 2.0: a modular bioinformatics suite for end-to-end genome-resolved prokaryotic, (micro)eukaryotic and viral multi-omics from either short- or long-read sequencing. Nucleic Acids Res. 2024 Aug 12;52(14):e63. doi: 10.1093/nar/gkae528. PMID: 38909293; PMCID: PMC11317156.
 
-Espinoza JL, Dupont CL. VEBA: a modular end-to-end suite for in silico recovery, clustering, and analysis of prokaryotic, microeukaryotic, and viral genomes from metagenomes. BMC Bioinformatics. 2022 Oct 12;23(1):419. doi: 10.1186/s12859-022-04973-8. PMID: 36224545."
+Espinoza JL, Dupont CL. VEBA: a modular end-to-end suite for in silico recovery, clustering, and analysis of prokaryotic, microeukaryotic, and viral genomes from metagenomes. BMC Bioinformatics. 2022 Oct 12;23(1):419. doi: 10.1186/s12859-022-04973-8. PMID: 36224545.
 
 
 #### Dependencies: 
@@ -224,7 +224,7 @@ Utility arguments:
   -v, --version         show program's version number and exit
 ```
 
-Example ??? split into paired files:
+Example — split into paired files:
 ```
 strobealign_wrapper -t 8 \
   reference.fasta.gz \
@@ -234,7 +234,7 @@ strobealign_wrapper -t 8 \
   --unmapped_fastq output/unmapped_%.fastq.gz
 ```
 
-Example ??? split into interleaved files:
+Example — split into interleaved files:
 ```
 strobealign_wrapper -t 8 \
   reference.fasta.gz \
@@ -244,7 +244,7 @@ strobealign_wrapper -t 8 \
   --unmapped_fastq output/unmapped.fastq.gz
 ```
 
-Example ??? BAM with coverage and depth stats:
+Example — BAM with coverage and depth stats:
 ```
 strobealign_wrapper -t 8 \
   reference.fasta.gz \
@@ -256,7 +256,7 @@ strobealign_wrapper -t 8 \
 
 **Coverage breadth (`coverage_breadth`)**
 
-Computes genome-level coverage breadth (percentage of bases covered at ??? `--minimum_depth` (0???100 scale)) from `samtools depth` or `samtools coverage` output. Outputs a single tab-separated row: `percentage_of_bases_covered\t<value>`. Either `--depth` or `--coverage` must be provided (not both). If `--depth` was generated without `-aa`, provide `--fasta` for reference lengths. `--minimum_depth > 1` is only supported with `--depth`.
+Computes genome-level coverage breadth (percentage of bases covered at ≥ `--minimum_depth` (0–100 scale)) from `samtools depth` or `samtools coverage` output. Outputs a single tab-separated row: `percentage_of_bases_covered\t<value>`. Either `--depth` or `--coverage` must be provided (not both). If `--depth` was generated without `-aa`, provide `--fasta` for reference lengths. `--minimum_depth > 1` is only supported with `--depth`.
 
 ```
 coverage_breadth -h
@@ -277,26 +277,26 @@ Utility arguments:
   -v, --version         show program's version number and exit
 ```
 
-Example ??? from `samtools depth -aa` output:
+Example — from `samtools depth -aa` output:
 ```
 coverage_breadth \
   --depth output/aligned.bam.depth.tsv
 ```
 
-Example ??? from `samtools depth` (without `-aa`), using FASTA for reference lengths:
+Example — from `samtools depth` (without `-aa`), using FASTA for reference lengths:
 ```
 coverage_breadth \
   --depth output/aligned.bam.depth.tsv \
   --fasta reference.fasta.gz
 ```
 
-Example ??? from `samtools coverage` output:
+Example — from `samtools coverage` output:
 ```
 coverage_breadth \
   --coverage output/aligned.bam.coverage.tsv
 ```
 
-Example ??? custom minimum depth, write to file:
+Example — custom minimum depth, write to file:
 ```
 coverage_breadth \
   --depth output/aligned.bam.depth.tsv \
