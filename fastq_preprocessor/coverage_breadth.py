@@ -43,11 +43,11 @@ def main(args=None):
 
     parser_io = parser.add_argument_group('Required I/O arguments')
     parser_io.add_argument('--depth', type=str, default=None,
-                           help='Path to samtools depth TSV.\nIf generated with -aa, all positions are present (--fasta not needed).\nIf generated without -aa, provide --fasta for reference lengths.')
+                           help='Path to samtools depth TSV (.tsv or .tsv.gz).\nIf generated with -aa, all positions are present (--fasta not needed).\nIf generated without -aa, provide --fasta for reference lengths.')
     parser_io.add_argument('--fasta', type=str, default=None,
                            help='Reference FASTA (required when samtools depth was run without -aa)')
     parser_io.add_argument('--coverage', type=str, default=None,
-                           help='Path to samtools coverage TSV')
+                           help='Path to samtools coverage TSV (.tsv or .tsv.gz)')
     parser_io.add_argument('--contigs_to_genomes', type=str, default=None,
                            help='Optional 2-column TSV (id_contig<TAB>id_genome, no header).\nWhen provided, breadth is computed per genome instead of globally.')
     parser_io.add_argument('-o', '--output', type=str, default='-',
