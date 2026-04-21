@@ -256,7 +256,9 @@ strobealign_wrapper -t 8 \
 
 **Coverage breadth (`coverage_breadth`)**
 
-Computes genome-level coverage breadth (percentage of bases covered at ≥ `--minimum_depth` (0–100 scale)) from `samtools depth` or `samtools coverage` output. Outputs a single tab-separated row: `percentage_of_bases_covered\t<value>`. Either `--depth` or `--coverage` must be provided (not both). If `--depth` was generated without `-aa`, provide `--fasta` for reference lengths. `--minimum_depth > 1` is only supported with `--depth`.
+Computes coverage breadth (percentage of bases covered at ≥ `--minimum_depth`, 0–100 scale) from `samtools depth` or `samtools coverage` output. By default, outputs a 2-column TSV `filepath<TAB>percentage_of_bases_covered` with one row for the input file. When `--contigs_to_genomes` is provided (a 2-column TSV `id_contig<TAB>id_genome`, no header), output is instead `id_genome<TAB>percentage_of_bases_covered` with one row per genome. Either `--depth` or `--coverage` must be provided (not both). If `--depth` was generated without `-aa`, provide `--fasta` for reference lengths. `--minimum_depth > 1` is only supported with `--depth`.
+
+When `--contigs_to_genomes` is used, any contig listed in the mapping but absent from the depth/coverage data triggers an error; any contig present in the data but absent from the mapping triggers a stderr warning and is excluded from the per-genome output.
 
 ```
 coverage_breadth -h
@@ -268,6 +270,8 @@ Required I/O arguments:
                         If generated without -aa, provide --fasta for reference lengths.
   --fasta               Reference FASTA (required when samtools depth was run without -aa)
   --coverage            Path to samtools coverage TSV
+  --contigs_to_genomes  Optional 2-column TSV (id_contig<TAB>id_genome, no header).
+                        When provided, breadth is computed per genome instead of globally.
   -o, --output          Output path [Default: stdout]
 
 Parameter arguments:
@@ -294,6 +298,14 @@ Example — from `samtools coverage` output:
 ```
 coverage_breadth \
   --coverage output/aligned.bam.coverage.tsv
+```
+
+Example — per-genome breadth with a contig-to-genome mapping:
+```
+coverage_breadth \
+  --depth output/aligned.bam.depth.tsv \
+  --contigs_to_genomes contigs_to_genomes.tsv \
+  -o output/coverage_breadth.per_genome.tsv
 ```
 
 Example — custom minimum depth, write to file:
