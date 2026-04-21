@@ -146,6 +146,10 @@ def build_cmd(opts, strobealign_extra_args, compression_level=6, coverage=False,
     # Create temporary directory
     create_directory(opts.temporary_directory)
 
+    has_mapped = mapped_info is not None
+    has_unmapped = unmapped_info is not None
+    has_bam = bam_path is not None
+
     # Build producer
     extra_args = " ".join(strobealign_extra_args) if strobealign_extra_args else ""
     producer_tokens = [
@@ -157,13 +161,16 @@ def build_cmd(opts, strobealign_extra_args, compression_level=6, coverage=False,
             r2=opts.reads2,
         ),
         "samtools view -h -",
-        "samtools collate -u -O - {prefix}".format(prefix=os.path.join(opts.temporary_directory, "samtools_collate_{}".format(run_id))),
     ]
+    # samtools collate name-groups mate pairs for samtools fastq; skip it when
+    # no FASTQ output is requested since samtools sort does not benefit from it.
+    if has_mapped or has_unmapped:
+        producer_tokens.append(
+            "samtools collate -u -O - {prefix}".format(
+                prefix=os.path.join(opts.temporary_directory, "samtools_collate_{}".format(run_id)),
+            )
+        )
     producer = " | ".join(producer_tokens)
-
-    has_mapped = mapped_info is not None
-    has_unmapped = unmapped_info is not None
-    has_bam = bam_path is not None
 
     # Build consumer commands
     consumers = []
