@@ -236,9 +236,13 @@ def build_cmd(opts, strobealign_extra_args, compression_level=6, coverage=False,
         parts.append("")
         post_cmds = ["samtools index {}".format(bam_path)]
         if coverage:
-            post_cmds.append("samtools coverage {bam} > {bam}.coverage.tsv".format(bam=bam_path))
+            post_cmds.append(
+                "samtools coverage {bam} | pigz -{c} -p {t} > {bam}.coverage.tsv.gz".format(
+                    bam=bam_path, c=opts.compression_level, t=opts.threads))
         if depth:
-            post_cmds.append("samtools depth -aa -H {bam} > {bam}.depth.tsv".format(bam=bam_path))
+            post_cmds.append(
+                "samtools depth -aa -H {bam} | pigz -{c} -p {t} > {bam}.depth.tsv.gz".format(
+                    bam=bam_path, c=opts.compression_level, t=opts.threads))
         parts.append(" \\\n&& ".join(post_cmds))
 
     return "\n".join(parts)
