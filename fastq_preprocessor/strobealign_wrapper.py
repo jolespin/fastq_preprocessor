@@ -183,7 +183,8 @@ def build_cmd(opts, strobealign_extra_args, compression_level=6, coverage=False,
             "-f 12", opts.samtools_threads, None, unmapped_info, opts.no_repair, compression_level,
         )))
     if has_bam:
-        consumers.append(("bam", "samtools sort -@ {threads} -T {tmp} -o {out} -".format(
+        consumers.append(("bam", "samtools view -F 4 -h {input} | samtools sort -@ {threads} -T {tmp} -o {out} -".format(
+            input=None,
             threads=opts.samtools_threads,
             tmp=os.path.join(opts.temporary_directory, "samtools_sort_{}".format(run_id)),
             out=bam_path,
@@ -249,19 +250,7 @@ def build_cmd(opts, strobealign_extra_args, compression_level=6, coverage=False,
 
 
 def _set_consumer_input(consumer_cmd, label, input_path):
-    """Replace the placeholder input in a consumer command.
-    
-    For bam consumers, append the input path.
-    For fastq consumers, the input was built with None as placeholder.
-    """
-    if label == "bam":
-        # samtools sort command ends with '- ', replace trailing '-' with actual input
-        if consumer_cmd.endswith(" -"):
-            return consumer_cmd[:-1] + input_path
-        return consumer_cmd
-    else:
-        # fastq consumer commands have None as the input placeholder
-        return consumer_cmd.replace("None", input_path)
+    return consumer_cmd.replace("None", input_path)
 
 
 # =============
@@ -296,7 +285,7 @@ def main(args=None):
     parser_io.add_argument("--unmapped_fastq", type=str, default=None,
                            help="Output path for unmapped reads.\nUse %% for paired: unmapped_%%.fastq.gz -> unmapped_1.fastq.gz, unmapped_2.fastq.gz\nWithout %%: interleaved output")
     parser_io.add_argument("--bam", type=str, default=None,
-                           help="Output path for coordinate-sorted BAM file")
+                           help="Output path for coordinate-sorted BAM file (mapped reads only)")
     parser_io.add_argument("--coverage", action="store_true", default=False,
                            help="Run samtools coverage on BAM and write {bam}.coverage.tsv (requires --bam)")
     parser_io.add_argument("--depth", action="store_true", default=False,
